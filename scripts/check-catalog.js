@@ -1,20 +1,23 @@
-// Verifies every file referenced by the catalog exists in assets/sounds.
-const fs = require('fs');
-const path = require('path');
-const { BUILT_IN_SOUNDS, SYSTEM_SOUNDS } = require('../src/shared/catalog');
+/**
+ * @file Verifies that every sample referenced by the catalog exists in assets/sounds.
+ * Run with `npm run check`; exits with code 1 when files are missing.
+ */
 
-const dir = path.join(__dirname, '..', 'assets', 'sounds');
-const missing = [];
-for (const s of BUILT_IN_SOUNDS) {
-  for (const f of [...s.variants, ...Object.values(s.special || {}), ...(s.release || [])]) {
-    if (!fs.existsSync(path.join(dir, f))) missing.push(`${s.id}: ${f}`);
-  }
-}
-for (const [id, f] of Object.entries(SYSTEM_SOUNDS)) {
-  if (!fs.existsSync(path.join(dir, f))) missing.push(`ui:${id}: ${f}`);
-}
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { BUILT_IN_SOUNDS, SYSTEM_SOUND_FILES } from '../src/shared/catalog.js';
+
+const SOUNDS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'sounds');
+
+const referenced = [
+  ...BUILT_IN_SOUNDS.flatMap((s) => [...s.variants, ...Object.values(s.special ?? {}), ...(s.release ?? [])].map((f) => [s.id, f])),
+  ...Object.entries(SYSTEM_SOUND_FILES),
+];
+const missing = referenced.filter(([, file]) => !fs.existsSync(path.join(SOUNDS_DIR, file)));
+
 if (missing.length) {
-  console.error('Missing sound files:\n  ' + missing.join('\n  ') + '\nRun: npm run sounds');
+  console.error(`Missing sound files:\n${missing.map(([id, f]) => `  ${id}: ${f}`).join('\n')}\nRun: npm run assets`);
   process.exit(1);
 }
-console.log(`All ${BUILT_IN_SOUNDS.length} packs and ${Object.keys(SYSTEM_SOUNDS).length} UI sounds OK.`);
+console.log(`All ${BUILT_IN_SOUNDS.length} packs and ${Object.keys(SYSTEM_SOUND_FILES).length} UI sounds are present.`);

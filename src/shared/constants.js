@@ -88,6 +88,7 @@ export const Limits = Object.freeze({
 
 export const UpdateStatus = Object.freeze({
   DEV: 'dev',
+  UNAVAILABLE: 'unavailable',
   IDLE: 'idle',
   CHECKING: 'checking',
   LATEST: 'latest',

@@ -12,6 +12,10 @@ p { margin: 0; }
 
 :focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
+/* App chrome is not selectable text; form fields and long-form copy still are. */
+body { user-select: none; }
+input, textarea, .panel p.small { user-select: text; }
+
 /* ---------- Top bar ---------- */
 
 .topbar {
@@ -205,7 +209,8 @@ textarea::placeholder { color: var(--text-muted); }
 
 /* ---------- Stats ---------- */
 
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+@media (max-width: 1180px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
 .tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; }
 .tile-label { font-size: 12px; color: var(--text-muted); }
 .tile-value { font-size: 26px; font-weight: 650; line-height: 1.2; }
@@ -301,7 +306,11 @@ textarea::placeholder { color: var(--text-muted); }
 .tooltip { position: fixed; left: 0; top: 0; z-index: 50; pointer-events: none; background: var(--text); color: var(--bg); padding: 6px 9px; border-radius: var(--radius-sm); font-size: 12px; line-height: 1.35; box-shadow: var(--shadow); white-space: nowrap; }
 .tooltip strong { display: block; }
 
-.toast-region { position: fixed; right: 20px; bottom: 20px; z-index: 60; display: grid; gap: 8px; width: min(380px, calc(100vw - 40px)); }
+.toast-region {
+  position: fixed; inset: auto 20px 20px auto; margin: 0; padding: 0; border: 0; background: transparent; overflow: visible;
+  display: grid; gap: 8px; width: min(380px, calc(100vw - 40px));
+}
+.toast-region:empty { display: none; }
 .toast {
   display: flex; align-items: flex-start; gap: 10px; padding: 12px 12px 12px 14px;
   background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent);

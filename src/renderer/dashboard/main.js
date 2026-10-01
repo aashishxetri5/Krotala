@@ -54,7 +54,7 @@ function mountNavigation(onShow) {
       else button.removeAttribute('aria-current');
     }
     for (const page of $$('.page')) page.hidden = page.id !== `page-${pageId}`;
-    $('#main').scrollTo?.(0, 0);
+    window.scrollTo(0, 0);
     onShow(pageId);
   }
 

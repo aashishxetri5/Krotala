@@ -1,10 +1,16 @@
-// Renders the app icon into build/ for electron-builder (it converts to .ico / .icns).
-// Run with: npm run icons
-const fs = require('fs');
-const path = require('path');
-const { drawIcon } = require('../src/shared/icon-draw');
+/**
+ * @file Renders the app icon to build/icon.png; electron-builder converts it to
+ * .ico and .icns. Run as part of `npm run assets`.
+ */
 
-const outDir = path.join(__dirname, '..', 'build');
-fs.mkdirSync(outDir, { recursive: true });
-fs.writeFileSync(path.join(outDir, 'icon.png'), drawIcon(1024, false));
-console.log(`Wrote ${path.join(outDir, 'icon.png')}`);
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { drawIcon } from '../src/shared/icon-draw.js';
+
+const ICON_SIZE = 1024;
+const OUT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'build');
+
+fs.mkdirSync(OUT_DIR, { recursive: true });
+fs.writeFileSync(path.join(OUT_DIR, 'icon.png'), drawIcon(ICON_SIZE));
+console.log(`Wrote ${path.join(OUT_DIR, 'icon.png')}`);

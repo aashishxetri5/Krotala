@@ -1,21 +1,37 @@
-// Synthesizes every built-in sound into assets/sounds/*.wav (16-bit mono, 44.1 kHz).
-// Run with: npm run sounds
-//
-// Everything is generated procedurally so the app ships with zero third-party audio.
-// Tweak the recipes below and re-run to change how a pack sounds.
+/**
+ * @file Synthesizes every built-in sound into assets/sounds/*.wav (16-bit mono, 44.1 kHz).
+ *
+ * All audio is generated procedurally, so the app ships without third-party samples.
+ * Change a recipe below and run `npm run assets` to hear the result.
+ */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const SR = 44100;
-const OUT_DIR = path.join(__dirname, '..', 'assets', 'sounds');
+const OUT_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'sounds');
 const TAU = Math.PI * 2;
+/** Harmonics above this frequency are skipped to avoid aliasing. */
+const HARMONIC_CEILING_HZ = 16000;
 
 // ---------- DSP helpers ----------
 
-// Deterministic PRNG so regenerating produces identical files.
 let seed = 1;
-function setSeed(s) { seed = s >>> 0; }
+
+/**
+ * Resets the noise generator so each recipe renders identically on every run.
+ * @param {number} value - Seed.
+ * @returns {void}
+ */
+function setSeed(value) {
+  seed = value >>> 0;
+}
+
+/**
+ * Deterministic pseudo-random number (mulberry32).
+ * @returns {number} Value in [0, 1).
+ */
 function rand() {
   seed = (seed + 0x6d2b79f5) >>> 0;
   let t = seed;
@@ -23,9 +39,24 @@ function rand() {
   t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
+
+/** @returns {number} White noise sample in [-1, 1). */
 const noise = () => rand() * 2 - 1;
+
+/**
+ * Exponential decay envelope.
+ * @param {number} t - Time in seconds.
+ * @param {number} tau - Time constant in seconds.
+ * @returns {number} Envelope value.
+ */
 const exp = (t, tau) => Math.exp(-t / tau);
 
+/**
+ * Renders a sound by evaluating `fn` for every sample.
+ * @param {number} duration - Length in seconds.
+ * @param {(t: number, i: number) => number} fn - Sample generator (time, index).
+ * @returns {Float32Array} Samples.
+ */
 function render(duration, fn) {
   const n = Math.round(duration * SR);
   const out = new Float32Array(n);
@@ -33,49 +64,104 @@ function render(duration, fn) {
   return out;
 }
 
-// RBJ cookbook biquad. Call set() per-sample for sweeps.
+/** Second-order filter (RBJ Audio EQ Cookbook). Call `set` per sample for sweeps. */
 class Biquad {
+  /**
+   * @param {'lowpass' | 'highpass' | 'bandpass'} type - Filter type.
+   * @param {number} freq - Cutoff or centre frequency in Hz.
+   * @param {number} [q=0.707] - Resonance.
+   */
   constructor(type, freq, q = 0.707) {
     this.type = type;
-    this.x1 = this.x2 = this.y1 = this.y2 = 0;
+    this.x1 = 0;
+    this.x2 = 0;
+    this.y1 = 0;
+    this.y2 = 0;
     this.set(freq, q);
   }
+
+  /**
+   * Recomputes the coefficients.
+   * @param {number} freq - Frequency in Hz.
+   * @param {number} [q=this.q] - Resonance.
+   * @returns {void}
+   */
   set(freq, q = this.q) {
     this.q = q;
     const f = Math.min(Math.max(freq, 10), SR * 0.45);
     const w0 = (TAU * f) / SR;
     const cos = Math.cos(w0);
     const alpha = Math.sin(w0) / (2 * q);
-    let b0, b1, b2;
-    if (this.type === 'lowpass') { b0 = (1 - cos) / 2; b1 = 1 - cos; b2 = (1 - cos) / 2; }
-    else if (this.type === 'highpass') { b0 = (1 + cos) / 2; b1 = -(1 + cos); b2 = (1 + cos) / 2; }
-    else { b0 = alpha; b1 = 0; b2 = -alpha; } // bandpass, 0 dB peak
+    let b0;
+    let b1;
+    let b2;
+    if (this.type === 'lowpass') {
+      b0 = (1 - cos) / 2; b1 = 1 - cos; b2 = (1 - cos) / 2;
+    } else if (this.type === 'highpass') {
+      b0 = (1 + cos) / 2; b1 = -(1 + cos); b2 = (1 + cos) / 2;
+    } else {
+      b0 = alpha; b1 = 0; b2 = -alpha; // Constant 0 dB peak gain.
+    }
     const a0 = 1 + alpha;
-    this.b0 = b0 / a0; this.b1 = b1 / a0; this.b2 = b2 / a0;
-    this.a1 = (-2 * cos) / a0; this.a2 = (1 - alpha) / a0;
+    this.b0 = b0 / a0;
+    this.b1 = b1 / a0;
+    this.b2 = b2 / a0;
+    this.a1 = (-2 * cos) / a0;
+    this.a2 = (1 - alpha) / a0;
   }
+
+  /**
+   * Filters one sample.
+   * @param {number} x - Input sample.
+   * @returns {number} Output sample.
+   */
   process(x) {
     const y = this.b0 * x + this.b1 * this.x1 + this.b2 * this.x2 - this.a1 * this.y1 - this.a2 * this.y2;
-    this.x2 = this.x1; this.x1 = x;
-    this.y2 = this.y1; this.y1 = y;
+    this.x2 = this.x1;
+    this.x1 = x;
+    this.y2 = this.y1;
+    this.y1 = y;
     return y;
   }
 }
 
-// Phase accumulator for oscillators whose frequency changes over time.
+/** Phase accumulator for oscillators whose frequency changes over time. */
 class Osc {
-  constructor() { this.phase = 0; }
-  next(freq) { this.phase += freq / SR; return this.phase * TAU; }
+  constructor() {
+    this.phase = 0;
+  }
+
+  /**
+   * Advances by one sample.
+   * @param {number} freq - Current frequency in Hz.
+   * @returns {number} Phase in radians.
+   */
+  next(freq) {
+    this.phase += freq / SR;
+    return this.phase * TAU;
+  }
 }
 
-// Band-limited square from odd harmonics (avoids harsh aliasing).
+/**
+ * Band-limited square wave built from odd harmonics.
+ * @param {number} phase - Phase in radians.
+ * @param {number} freq - Fundamental in Hz (limits the harmonic count).
+ * @param {number} [maxHarmonic=31] - Highest harmonic.
+ * @returns {number} Sample.
+ */
 function square(phase, freq, maxHarmonic = 31) {
   let s = 0;
-  for (let k = 1; k <= maxHarmonic && k * freq < 16000; k += 2) s += Math.sin(k * phase) / k;
+  for (let k = 1; k <= maxHarmonic && k * freq < HARMONIC_CEILING_HZ; k += 2) s += Math.sin(k * phase) / k;
   return s;
 }
 
-// Normalize to a target peak and apply short fades to avoid clicks.
+/**
+ * Normalizes to a target peak and applies short fades so samples never click.
+ * @param {Float32Array} samples - Samples, modified in place.
+ * @param {number} [gain=0.9] - Target peak.
+ * @param {number} [fadeOut=0.01] - Fade-out length in seconds.
+ * @returns {Float32Array} The same samples.
+ */
 function finish(samples, gain = 0.9, fadeOut = 0.01) {
   let peak = 0;
   for (const s of samples) peak = Math.max(peak, Math.abs(s));
@@ -92,6 +178,12 @@ function finish(samples, gain = 0.9, fadeOut = 0.01) {
   return samples;
 }
 
+/**
+ * Writes samples as a 16-bit mono WAV file.
+ * @param {string} name - File name inside OUT_DIR.
+ * @param {Float32Array} samples - Samples in [-1, 1].
+ * @returns {void}
+ */
 function writeWav(name, samples) {
   const data = Buffer.alloc(samples.length * 2);
   for (let i = 0; i < samples.length; i++) {
@@ -103,13 +195,13 @@ function writeWav(name, samples) {
   header.writeUInt32LE(36 + data.length, 4);
   header.write('WAVE', 8);
   header.write('fmt ', 12);
-  header.writeUInt32LE(16, 16);      // fmt chunk size
-  header.writeUInt16LE(1, 20);       // PCM
-  header.writeUInt16LE(1, 22);       // mono
+  header.writeUInt32LE(16, 16); // fmt chunk size
+  header.writeUInt16LE(1, 20); // PCM
+  header.writeUInt16LE(1, 22); // mono
   header.writeUInt32LE(SR, 24);
-  header.writeUInt32LE(SR * 2, 28);  // byte rate
-  header.writeUInt16LE(2, 32);       // block align
-  header.writeUInt16LE(16, 34);      // bits per sample
+  header.writeUInt32LE(SR * 2, 28); // byte rate
+  header.writeUInt16LE(2, 32); // block align
+  header.writeUInt16LE(16, 34); // bits per sample
   header.write('data', 36);
   header.writeUInt32LE(data.length, 40);
   fs.writeFileSync(path.join(OUT_DIR, name), Buffer.concat([header, data]));
@@ -117,6 +209,7 @@ function writeWav(name, samples) {
 
 // ---------- Recipes ----------
 
+/** File name → rendered samples. */
 const sounds = {};
 
 // Dial pad: real DTMF pairs. Index 0-9 = digits, 10 = *, 11 = #.
@@ -132,7 +225,12 @@ DTMF.forEach(([lo, hi], i) => {
   }), 0.55);
 });
 
-// Mechanical keyboard: switch click, then bottom-out thock.
+/**
+ * Mechanical switch: the click of the switch, then the bottom-out thock.
+ * @param {number} v - Variant number (shifts pitch and seed).
+ * @param {{ thockF?: number, thockDecay?: number, dur?: number }} [options] - Thock pitch, decay and length.
+ * @returns {Float32Array} Samples.
+ */
 function mechanical(v, { thockF = 300 + v * 25, thockDecay = 0.02, dur = 0.09 } = {}) {
   setSeed(100 + v);
   const hp = new Biquad('highpass', 2000 + v * 300);
@@ -267,6 +365,13 @@ for (let v = 0; v < 3; v++) {
     + hp.process(noise()) * exp(t, 0.07) * 0.8
   )), 0.8);
 }
+/**
+ * Hi-hat: double high-passed noise.
+ * @param {number} seedN - Noise seed.
+ * @param {number} tau - Decay time constant.
+ * @param {number} dur - Length in seconds.
+ * @returns {Float32Array} Samples.
+ */
 function hat(seedN, tau, dur) {
   setSeed(seedN);
   const hp1 = new Biquad('highpass', 7000), hp2 = new Biquad('highpass', 7000);
@@ -274,6 +379,15 @@ function hat(seedN, tau, dur) {
 }
 sounds['drum_hat.wav'] = hat(602, 0.018, 0.08);
 sounds['drum_hat_open.wav'] = hat(603, 0.12, 0.4);
+/**
+ * Tom: a sine whose pitch drops quickly, plus a little stick noise.
+ * @param {number} seedN - Noise seed.
+ * @param {number} lo - Resting pitch in Hz.
+ * @param {number} sweep - Extra pitch at the strike in Hz.
+ * @param {number} tau - Decay time constant.
+ * @param {number} dur - Length in seconds.
+ * @returns {Float32Array} Samples.
+ */
 function tom(seedN, lo, sweep, tau, dur) {
   setSeed(seedN);
   const osc = new Osc();

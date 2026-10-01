@@ -22,7 +22,7 @@ import { icon } from '../../shared/icons.js';
 export function confirmDialog({ title, message, confirmLabel = 'Confirm', cancelLabel = 'Cancel', danger = false }) {
   return new Promise((resolve) => {
     const cancel = h('button', { className: 'btn', text: cancelLabel, attrs: { type: 'button' } });
-    const confirm = h('button', { className: `btn ${danger ? 'btn-danger' : 'btn-primary'}`, text: confirmLabel, attrs: { type: 'button' } });
+    const confirm = h('button', { className: `btn btn-primary${danger ? ' btn-danger' : ''}`, text: confirmLabel, attrs: { type: 'button' } });
     const dialog = h('dialog', { className: 'modal modal-small', attrs: { 'aria-labelledby': 'confirm-title' } }, [
       h('div', { className: 'modal-body' }, [
         h('div', { className: 'confirm-head' }, [

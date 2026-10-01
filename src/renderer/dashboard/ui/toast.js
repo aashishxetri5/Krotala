@@ -32,10 +32,20 @@ let region = null;
  */
 function getRegion() {
   if (!region) {
-    region = h('div', { className: 'toast-region', attrs: { 'aria-live': 'polite', 'aria-relevant': 'additions' } });
+    // A manual popover lives in the top layer, so toasts stay visible above open dialogs.
+    region = h('div', { className: 'toast-region', attrs: { popover: 'manual', 'aria-live': 'polite', 'aria-relevant': 'additions' } });
     document.body.append(region);
   }
   return region;
+}
+
+/**
+ * Moves the toast region above anything else in the top layer (such as a dialog opened after it).
+ * @returns {void}
+ */
+function raiseRegion() {
+  if (region.matches(':popover-open')) region.hidePopover();
+  region.showPopover();
 }
 
 /**
@@ -89,6 +99,7 @@ export function showToast({ kind = ToastKind.INFO, title, message, action }) {
 
   container.append(toast);
   while (container.children.length > MAX_VISIBLE) container.firstElementChild.remove();
+  raiseRegion();
   start();
   return dismiss;
 }

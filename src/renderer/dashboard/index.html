@@ -41,7 +41,7 @@
         <div class="page-head">
           <div>
             <h2 id="h-sounds">Sounds</h2>
-            <p class="muted">Pick what your keyboard sounds like. Hover a card to preview it.</p>
+            <p class="muted">Choose a pack to use it. Press play on a card to preview it.</p>
           </div>
           <div class="chips" id="filters" role="tablist" aria-label="Categories"></div>
         </div>
@@ -274,7 +274,7 @@
       </div>
       <div class="field">
         <label for="pack-name">Name</label>
-        <input id="pack-name" type="text" maxlength="32" autocomplete="off">
+        <input id="pack-name" type="text" maxlength="32" autocomplete="off" autofocus>
       </div>
       <div class="field">
         <span class="field-label" id="pack-icon-label">Icon</span>
@@ -303,7 +303,7 @@
         <button class="icon-button" type="button" data-close aria-label="Close"><span data-icon="x"></span></button>
       </div>
       <div class="recorder-stage">
-        <button class="record-button" id="record-toggle" type="button" aria-label="Start recording"><span></span></button>
+        <button class="record-button" id="record-toggle" type="button" aria-label="Start recording" autofocus><span></span></button>
         <div class="record-meter" id="record-meter" hidden><span></span></div>
         <p class="muted" id="recorder-status">Press the button and make a short sound, up to 4 seconds.</p>
       </div>

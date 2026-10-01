@@ -3,9 +3,23 @@
  * and install when the app quits, or immediately through "Restart to update".
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { app } from 'electron';
 import { UpdateStatus } from '../../shared/constants.js';
 import { Timing } from '../constants.js';
+
+/** Written by electron-builder when the build is published to a release feed. */
+const UPDATE_FEED_FILE = 'app-update.yml';
+
+/**
+ * @returns {string} Initial status: development builds and builds made without a
+ *   release feed (for example `npm run dist`) cannot update themselves.
+ */
+function initialStatus() {
+  if (!app.isPackaged) return UpdateStatus.DEV;
+  return fs.existsSync(path.join(process.resourcesPath, UPDATE_FEED_FILE)) ? UpdateStatus.IDLE : UpdateStatus.UNAVAILABLE;
+}
 
 /**
  * @typedef {object} UpdateState
@@ -22,19 +36,19 @@ export class Updater {
   constructor(onChange) {
     this.onChange = onChange;
     /** @type {UpdateState} */
-    this.state = { status: app.isPackaged ? UpdateStatus.IDLE : UpdateStatus.DEV, version: null, progress: 0, error: null };
+    this.state = { status: initialStatus(), version: null, progress: 0, error: null };
     this.autoUpdater = null;
     this.interval = null;
     this.firstCheck = null;
   }
 
   /**
-   * Enables or disables scheduled checks. Development builds never check.
+   * Enables or disables scheduled checks. Builds that cannot update never check.
    * @param {boolean} automatic - Whether to check and download on a schedule.
    * @returns {Promise<void>}
    */
   async configure(automatic) {
-    if (!app.isPackaged) return;
+    if (!this.canUpdate()) return;
     await this.ensureLoaded();
     clearTimeout(this.firstCheck);
     clearInterval(this.interval);
@@ -57,6 +71,11 @@ export class Updater {
       // Reported through the 'error' event.
     });
     return this.state;
+  }
+
+  /** @returns {boolean} True when this build has an update feed. */
+  canUpdate() {
+    return this.state.status !== UpdateStatus.DEV && this.state.status !== UpdateStatus.UNAVAILABLE;
   }
 
   /**
