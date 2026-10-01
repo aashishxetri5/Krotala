@@ -1,110 +1,116 @@
-// Built-in sound packs. Each file lives in assets/sounds/ and is produced by
-// scripts/generate-sounds.js — edit both together.
-//
-//   variants : one is picked per key (stable per key, so every key has its own voice)
-//   special  : optional per-key replacements built into the pack (e.g. typewriter bell on Enter)
-//   release  : optional key-up sounds (used when "Key release sound" is set to "Pack default")
-//   pitched  : tonal sound that works best with Melody / Song mode
-//   baseNote : MIDI note the recording is pitched at, so Song mode plays in tune (default 60 = C4)
-//   fx       : on-screen effect style used when the effect style is "Auto"
+/**
+ * @file Built-in sound packs. Sample files are produced by scripts/generate-sounds.js
+ * into assets/sounds/; `npm run check` verifies every file referenced here exists.
+ */
 
-const range = (prefix, n) => Array.from({ length: n }, (_, i) => `${prefix}_${i}.wav`);
+import { FxStyle, UiSound } from './constants.js';
 
-const BUILT_IN_SOUNDS = [
+/**
+ * Builds the file names `prefix_0.wav` … `prefix_{count-1}.wav`.
+ * @param {string} prefix - File name prefix.
+ * @param {number} count - Number of files.
+ * @returns {string[]} File names.
+ */
+const range = (prefix, count) => Array.from({ length: count }, (_, i) => `${prefix}_${i}.wav`);
+
+/** @type {readonly import('./types.js').SoundPack[]} */
+export const BUILT_IN_SOUNDS = Object.freeze([
   {
-    id: 'dialpad', name: 'Dial Pad', emoji: '📞', category: 'Classic', fx: 'ripple',
-    description: 'Real DTMF phone tones — digits play their own tone',
+    id: 'dialpad', name: 'Dial Pad', icon: 'phone', category: 'Classic', fx: FxStyle.RIPPLE,
+    description: 'Phone keypad tones. Each digit plays its real tone.',
     variants: range('dialpad', 12),
   },
   {
-    id: 'mechanical', name: 'Mechanical', emoji: '⌨️', category: 'Classic', fx: 'ripple',
-    description: 'Clicky switches with a deep spacebar thock',
+    id: 'mechanical', name: 'Mechanical', icon: 'keyboard', category: 'Classic', fx: FxStyle.RIPPLE,
+    description: 'Clicky switches with a deep spacebar thock.',
     variants: range('mechanical', 4),
     special: { Space: 'mechanical_space.wav', Enter: 'mechanical_space.wav' },
     release: range('mechanical_up', 4),
   },
   {
-    id: 'typewriter', name: 'Typewriter', emoji: '📠', category: 'Classic', fx: 'emoji',
-    description: 'Clacky keys, and a bell when you hit Enter',
+    id: 'typewriter', name: 'Typewriter', icon: 'type', category: 'Classic', fx: FxStyle.ICON,
+    description: 'Type-bar clacks and a bell on Enter.',
     variants: range('typewriter', 3),
     special: { Enter: 'typewriter_bell.wav' },
   },
   {
-    id: 'piano', name: 'Piano', emoji: '🎹', category: 'Musical', pitched: true, baseNote: 60, fx: 'notes',
-    description: 'Grand-ish piano. Try Melody or Song mode!',
+    id: 'piano', name: 'Piano', icon: 'piano', category: 'Musical', pitched: true, baseNote: 60, fx: FxStyle.NOTES,
+    description: 'Bright acoustic piano. Try it with Song mode.',
     variants: ['piano.wav'],
   },
   {
-    id: 'harmonium', name: 'Harmonium', emoji: '🪗', category: 'Musical', pitched: true, baseNote: 60, fx: 'notes',
-    description: 'Reedy bellows organ',
+    id: 'harmonium', name: 'Harmonium', icon: 'keyboard-music', category: 'Musical', pitched: true, baseNote: 60, fx: FxStyle.NOTES,
+    description: 'Reedy bellows organ.',
     variants: ['harmonium.wav'],
   },
   {
-    id: 'marimba', name: 'Marimba', emoji: '🪘', category: 'Musical', pitched: true, baseNote: 72, fx: 'notes',
-    description: 'Warm wooden mallet tones',
+    id: 'marimba', name: 'Marimba', icon: 'music-4', category: 'Musical', pitched: true, baseNote: 72, fx: FxStyle.NOTES,
+    description: 'Warm wooden mallet tones.',
     variants: ['marimba.wav'],
   },
   {
-    id: 'drums', name: 'Drum Kit', emoji: '🥁', category: 'Musical', fx: 'confetti',
-    description: 'Every key is a drum. Space = kick, Enter = crash',
+    id: 'drums', name: 'Drum Kit', icon: 'drum', category: 'Musical', fx: FxStyle.CONFETTI,
+    description: 'Every key is a drum. Space is the kick, Enter the crash.',
     variants: ['drum_hat.wav', 'drum_snare.wav', 'drum_tom_hi.wav', 'drum_tom_lo.wav', 'drum_hat_open.wav'],
     special: { Space: 'drum_kick.wav', Enter: 'drum_crash.wav' },
   },
   {
-    id: 'pewpew', name: 'Pew Pew', emoji: '🔫', category: 'Action', fx: 'laser',
-    description: 'Sci-fi laser blasts',
+    id: 'pewpew', name: 'Pew Pew', icon: 'zap', category: 'Action', fx: FxStyle.LASER,
+    description: 'Sci-fi laser blasts.',
     variants: range('pewpew', 3),
   },
   {
-    id: 'shotgun', name: 'Shotgun', emoji: '💥', category: 'Action', fx: 'bullet',
-    description: 'BOOM. Enter racks the pump',
+    id: 'shotgun', name: 'Shotgun', icon: 'crosshair', category: 'Action', fx: FxStyle.BULLET,
+    description: 'Full blast on every key. Enter racks the pump.',
     variants: ['shotgun.wav'],
     special: { Enter: 'shotgun_pump.wav' },
   },
   {
-    id: 'swoosh', name: 'Ninja Swoosh', emoji: '🥷', category: 'Action', fx: 'slash',
-    description: 'Swift blade swipes',
+    id: 'swoosh', name: 'Ninja Swoosh', icon: 'swords', category: 'Action', fx: FxStyle.SLASH,
+    description: 'Fast blade swipes.',
     variants: range('swoosh', 3),
   },
   {
-    id: 'coin', name: 'Retro Coin', emoji: '🪙', category: 'Retro', baseNote: 83, fx: 'emoji',
-    description: '8-bit coin pickup',
+    id: 'coin', name: 'Retro Coin', icon: 'coins', category: 'Retro', baseNote: 83, fx: FxStyle.ICON,
+    description: '8-bit coin pickup.',
     variants: ['coin.wav'],
   },
   {
-    id: 'jump', name: '8-bit Jump', emoji: '🍄', category: 'Retro', fx: 'emoji',
-    description: 'Boing-boing platformer hops',
+    id: 'jump', name: '8-bit Jump', icon: 'gamepad-2', category: 'Retro', fx: FxStyle.ICON,
+    description: 'Platformer jump sounds.',
     variants: range('jump', 2),
   },
   {
-    id: 'bubble', name: 'Bubble Pop', emoji: '🫧', category: 'Funny', fx: 'bubbles',
-    description: 'Satisfying little bloops',
+    id: 'bubble', name: 'Bubble Pop', icon: 'droplets', category: 'Funny', fx: FxStyle.BUBBLES,
+    description: 'Short, satisfying bloops.',
     variants: range('bubble', 3),
   },
   {
-    id: 'boing', name: 'Boing', emoji: '🌀', category: 'Funny', baseNote: 57, fx: 'emoji',
-    description: 'Cartoon spring',
+    id: 'boing', name: 'Boing', icon: 'activity', category: 'Funny', baseNote: 57, fx: FxStyle.ICON,
+    description: 'Cartoon spring.',
     variants: ['boing.wav'],
   },
   {
-    id: 'squeak', name: 'Squeaky Toy', emoji: '🐤', category: 'Funny', fx: 'emoji',
-    description: 'Rubber duck energy',
+    id: 'squeak', name: 'Squeaky Toy', icon: 'bird', category: 'Funny', fx: FxStyle.ICON,
+    description: 'Rubber duck squeaks.',
     variants: range('squeak', 3),
   },
   {
-    id: 'bonk', name: 'Bonk', emoji: '🔨', category: 'Funny', fx: 'emoji',
-    description: 'Wooden cartoon bonk',
+    id: 'bonk', name: 'Bonk', icon: 'hammer', category: 'Funny', fx: FxStyle.ICON,
+    description: 'Hollow wooden cartoon bonk.',
     variants: range('bonk', 2),
   },
-];
+]);
 
-// UI sounds that aren't packs (combo milestones, achievements).
-const SYSTEM_SOUNDS = {
-  combo: 'ui_combo.wav',
-  achievement: 'ui_achievement.wav',
-};
+/** UI sound id → sample file. */
+export const SYSTEM_SOUND_FILES = Object.freeze({
+  [UiSound.COMBO]: 'ui_combo.wav',
+  [UiSound.ACHIEVEMENT]: 'ui_achievement.wav',
+});
 
-// Pseudo-pack: picks a random built-in pack on every keystroke.
-const CHAOS_ID = '__chaos';
-
-module.exports = { BUILT_IN_SOUNDS, SYSTEM_SOUNDS, CHAOS_ID };
+/** Pseudo-pack shown in pickers for CHAOS_SOUND_ID. */
+export const CHAOS_PACK = Object.freeze({
+  name: 'Chaos Mode',
+  icon: 'dices',
+  description: 'A random pack on every key.',
+});
