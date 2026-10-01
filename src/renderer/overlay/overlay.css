@@ -1,77 +1,46 @@
+/* Transparent overlay drawn above every app. */
+
 html, body {
-  margin: 0;
   width: 100%;
   height: 100%;
+  margin: 0;
   overflow: hidden;
   background: transparent;
   user-select: none;
-  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
 }
 
 canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
 
 .combo {
-  position: fixed;
-  top: 28px;
-  right: 36px;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  color: white;
-  font-weight: 800;
-  font-size: 44px;
-  font-variant-numeric: tabular-nums;
+  position: fixed; top: 28px; right: 36px;
+  display: flex; align-items: baseline; gap: 4px;
+  color: white; font-weight: 800; font-size: 44px; font-variant-numeric: tabular-nums;
   text-shadow: 0 2px 0 #4b2fd6, 0 6px 18px rgba(124, 92, 255, 0.7);
-  opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 0.25s, transform 0.25s;
+  opacity: 0; transform: scale(0.8);
+  transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
 }
-.combo::before { content: "×"; font-size: 30px; }
-.combo small { font-size: 16px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.85; }
+.combo-x { font-size: 30px; }
+.combo small { font-size: 15px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.85; margin-left: 4px; }
 .combo.show { opacity: 1; transform: scale(1); }
 .combo.bump { animation: bump 0.12s ease-out; }
 
 .banners {
-  position: fixed;
-  top: 12%;
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  pointer-events: none;
+  position: fixed; top: 12%; left: 0; right: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
 }
-.banner {
-  text-align: center;
-  color: white;
-  animation: banner 2.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+.banner { text-align: center; color: white; animation: banner 2.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards; }
+.banner-title {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  font-size: 60px; font-weight: 900; letter-spacing: 0.01em; text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 4px 0 #3a22b8, 0 10px 28px rgba(124, 92, 255, 0.7);
 }
-.banner .title {
-  font-size: 64px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
-  background: linear-gradient(180deg, #fff 20%, #c7b8ff 60%, #7c5cff);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 4px 0 #3a22b8) drop-shadow(0 10px 24px rgba(124, 92, 255, 0.6));
-}
-.banner .sub {
-  margin-top: 2px;
-  font-size: 20px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
+.banner-subtitle {
+  margin-top: 2px; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
 }
-.banner.achievement .title {
-  font-size: 44px;
-  background: linear-gradient(180deg, #fff 20%, #ffe28a 60%, #ffb020);
-  -webkit-background-clip: text;
-  background-clip: text;
-  filter: drop-shadow(0 3px 0 #a86a00) drop-shadow(0 10px 24px rgba(255, 176, 32, 0.5));
-}
+.banner.achievement .banner-title { font-size: 42px; text-transform: none; text-shadow: 0 3px 0 #a86a00, 0 10px 24px rgba(255, 176, 32, 0.55); }
+.banner.achievement .icon { color: var(--gold); filter: drop-shadow(0 3px 0 #a86a00); }
 
 @keyframes banner {
   0% { opacity: 0; transform: scale(0.4) translateY(20px); }
@@ -81,6 +50,6 @@ canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
   100% { opacity: 0; transform: scale(0.96) translateY(-16px); }
 }
 @keyframes bump {
-  0% { transform: scale(1.18); }
-  100% { transform: scale(1); }
+  from { transform: scale(1.18); }
+  to { transform: scale(1); }
 }

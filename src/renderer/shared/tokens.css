@@ -1,0 +1,73 @@
+/* Design tokens shared by the app's windows. Dark is the default theme. */
+
+:root {
+  --bg: #101018;
+  --surface: #181824;
+  --surface-2: #20202f;
+  --surface-3: #2a2a3c;
+  --border: #2a2a3c;
+  --grid: #26263a;
+  --text: #ececf4;
+  --text-muted: #9a9ab0;
+  --accent: #7c5cff;
+  --accent-strong: #a28bff;
+  --accent-soft: rgba(124, 92, 255, 0.16);
+  --on-accent: #ffffff;
+  --success: #2ec27e;
+  --warning: #f5a524;
+  --danger: #ff5c7a;
+  --gold: #ffb020;
+
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-strong);
+
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: "Cascadia Mono", "SF Mono", Consolas, monospace;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f5fa;
+    --surface: #ffffff;
+    --surface-2: #f0eff7;
+    --surface-3: #e6e4f0;
+    --border: #e0dfeb;
+    --grid: #ebeaf2;
+    --text: #1b1b28;
+    --text-muted: #626278;
+    --accent: #6a48f0;
+    --accent-strong: #5534d6;
+    --accent-soft: rgba(106, 72, 240, 0.1);
+    --shadow: 0 6px 18px rgba(30, 20, 80, 0.1);
+    color-scheme: light;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.icon { flex: none; display: block; }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
