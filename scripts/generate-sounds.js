@@ -153,6 +153,15 @@ function mechanical(v, { thockF = 300 + v * 25, thockDecay = 0.02, dur = 0.09 } 
 for (let v = 0; v < 4; v++) sounds[`mechanical_${v}.wav`] = finish(mechanical(v), 0.8);
 sounds['mechanical_space.wav'] = finish(mechanical(9, { thockF: 150, thockDecay: 0.045, dur: 0.16 }), 0.85);
 
+// Mechanical key release: the lighter, higher "tick" of the switch springing back.
+for (let v = 0; v < 4; v++) {
+  setSeed(150 + v);
+  const hp = new Biquad('highpass', 3500 + v * 250);
+  sounds[`mechanical_up_${v}.wav`] = finish(render(0.045, (t) => (
+    hp.process(noise()) * exp(t, 0.0015) + Math.sin(TAU * (4200 + v * 300) * t) * exp(t, 0.004) * 0.25
+  )), 0.45);
+}
+
 // Typewriter: type-bar strike + platen thud + return clack.
 for (let v = 0; v < 3; v++) {
   setSeed(200 + v);
@@ -410,6 +419,39 @@ sounds['drum_tom_lo.wav'] = tom(605, 95, 60, 0.22, 0.6);
       + hp.process(noise()) * exp(t, 0.002) * 0.3;
   }), 0.85);
 });
+
+// ---------- UI sounds ----------
+
+// Combo milestone: quick rising arpeggio (C5 E5 G5 C6) with a little sparkle.
+{
+  setSeed(1100);
+  const hp = new Biquad('highpass', 6000);
+  const notes = [523.25, 659.25, 783.99, 1046.5];
+  const step = 0.07;
+  sounds['ui_combo.wav'] = finish(render(0.6, (t) => {
+    let s = 0;
+    notes.forEach((f, i) => {
+      const tn = t - i * step;
+      if (tn < 0) return;
+      const decay = i === notes.length - 1 ? 0.18 : 0.06;
+      const p = TAU * f * tn;
+      s += (Math.sin(p) * 0.7 + Math.sin(2 * p) * 0.2 + Math.sin(3 * p) * 0.1) * exp(tn, decay);
+    });
+    const tl = t - 3 * step;
+    if (tl > 0) s += hp.process(noise()) * exp(tl, 0.12) * 0.15;
+    return s;
+  }), 0.6, 0.05);
+}
+
+// Achievement: two bell strikes (G5 then C6) with shimmering partials.
+{
+  const strike = (f, t) => {
+    if (t < 0) return 0;
+    return [[1, 1, 0.6], [2.0, 0.4, 0.35], [3.01, 0.25, 0.2], [4.2, 0.12, 0.12]]
+      .reduce((s, [ratio, amp, tau]) => s + Math.sin(TAU * f * ratio * t) * amp * exp(t, tau), 0);
+  };
+  sounds['ui_achievement.wav'] = finish(render(1.2, (t) => strike(783.99, t) + strike(1046.5, t - 0.12) * 1.1), 0.6, 0.1);
+}
 
 // ---------- Write ----------
 
