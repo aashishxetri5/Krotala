@@ -5,25 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; media-src 'self' blob: mediastream:">
   <title>Keyboard Sounds</title>
+  <link rel="stylesheet" href="../shared/tokens.css">
   <link rel="stylesheet" href="dashboard.css">
+  <script type="module" src="main.js"></script>
 </head>
-<body>
+<body class="is-loading">
   <header class="topbar">
     <div class="brand">
-      <div class="logo" aria-hidden="true">♪</div>
+      <div class="logo" data-icon="audio-lines" data-icon-size="20"></div>
       <div class="brand-text">
         <h1>Keyboard Sounds</h1>
-        <p class="muted" id="status-line">Loading…</p>
+        <p class="status" id="status"><span class="status-dot"></span><span id="status-text">Starting…</span></p>
       </div>
     </div>
     <div class="top-controls">
-      <div class="volume" title="Volume">
-        <span aria-hidden="true">🔊</span>
+      <div class="volume">
+        <span class="volume-icon" data-icon="volume-2"></span>
         <input type="range" id="volume" min="0" max="100" step="1" aria-label="Volume">
-        <output id="volume-value" class="pill">70%</output>
+        <output id="volume-value" class="pill" for="volume">70%</output>
       </div>
-      <label class="power" title="Turn sounds on or off">
-        <input type="checkbox" id="enabled">
+      <label class="power">
+        <input type="checkbox" id="enabled" aria-label="Sounds on">
         <span class="power-track"><span class="power-thumb"></span></span>
         <span class="power-label" id="enabled-label">On</span>
       </label>
@@ -31,226 +33,231 @@
   </header>
 
   <div class="layout">
-    <nav class="sidebar" aria-label="Sections">
-      <button data-page="sounds" class="active"><span>🎵</span>Sounds</button>
-      <button data-page="keys"><span>⌨️</span>Keys</button>
-      <button data-page="effects"><span>✨</span>Effects</button>
-      <button data-page="apps"><span>🧩</span>Apps</button>
-      <button data-page="stats"><span>📊</span>Stats</button>
-      <button data-page="settings"><span>⚙️</span>Settings</button>
-      <div class="sidebar-foot muted">🔒 Keys are counted,<br>never recorded.</div>
-    </nav>
+    <nav class="sidebar" id="nav" aria-label="Sections"></nav>
 
-    <main>
-      <!-- ============ Sounds ============ -->
-      <section class="page active" id="page-sounds">
-        <div class="section-head">
-          <h2>Pick a sound</h2>
-          <div class="chips" id="filters"></div>
+    <main id="main">
+      <!-- Sounds -->
+      <section class="page" id="page-sounds" aria-labelledby="h-sounds">
+        <div class="page-head">
+          <div>
+            <h2 id="h-sounds">Sounds</h2>
+            <p class="muted">Pick what your keyboard sounds like. Hover a card to preview it.</p>
+          </div>
+          <div class="chips" id="filters" role="tablist" aria-label="Categories"></div>
         </div>
-        <div class="grid" id="grid"></div>
-
+        <div class="grid" id="sound-grid" aria-busy="true">
+          <div class="card skeleton"></div><div class="card skeleton"></div><div class="card skeleton"></div><div class="card skeleton"></div>
+          <div class="card skeleton"></div><div class="card skeleton"></div><div class="card skeleton"></div><div class="card skeleton"></div>
+        </div>
         <div class="columns">
           <div class="panel">
             <h3>Pitch</h3>
-            <div class="segmented" id="pitch-mode" role="radiogroup" aria-label="Pitch mode">
-              <button data-value="off" role="radio">Normal</button>
-              <button data-value="wobble" role="radio">Wobble</button>
-              <button data-value="melody" role="radio">Melody</button>
-              <button data-value="song" role="radio">Song</button>
-            </div>
+            <div class="segmented" id="pitch-mode" role="radiogroup" aria-label="Pitch mode"></div>
             <p class="hint" id="pitch-hint"></p>
-            <div id="song-controls" class="song-controls" hidden>
-              <select id="song" aria-label="Song"></select>
-              <button class="btn" id="song-restart">↺ Restart</button>
+            <div class="song-row" id="song-row" hidden>
+              <label class="visually-hidden" for="song">Song</label>
+              <select id="song"></select>
+              <button class="btn" id="song-restart" type="button"><span data-icon="rotate-ccw" data-icon-size="16"></span>Restart</button>
               <span class="muted small" id="song-progress"></span>
             </div>
           </div>
           <div class="panel">
             <h3>Space</h3>
-            <label class="row-toggle">
-              <span>3D stereo<small>Keys on the left play in your left ear, keys on the right in your right</small></span>
-              <input type="checkbox" id="stereo" class="switch">
+            <label class="row">
+              <span class="row-text">3D stereo<small>Keys on the left play in your left ear, keys on the right in your right.</small></span>
+              <input type="checkbox" class="switch" data-setting="stereo">
             </label>
             <h3>Try it</h3>
-            <textarea id="playground" rows="3" placeholder="Type here to test… (works in every app, too)"></textarea>
+            <label class="visually-hidden" for="playground">Test area</label>
+            <textarea id="playground" rows="3" placeholder="Type here to try your sound. It works in every app."></textarea>
           </div>
         </div>
       </section>
 
-      <!-- ============ Keys ============ -->
-      <section class="page" id="page-keys">
-        <h2>Key mapping</h2>
-        <p class="muted lead">Give keys or whole groups their own sound, or silence them. A single key beats its group.</p>
+      <!-- Keys -->
+      <section class="page" id="page-keys" aria-labelledby="h-keys" hidden>
+        <div class="page-head">
+          <div>
+            <h2 id="h-keys">Key mapping</h2>
+            <p class="muted">Give keys or whole groups their own sound, or silence them. A single key overrides its group.</p>
+          </div>
+        </div>
         <div class="columns">
           <div class="panel">
-            <h3>Per key &amp; group</h3>
-            <div id="overrides"></div>
+            <h3>Keys and groups</h3>
+            <div id="overrides" class="form-rows"></div>
           </div>
           <div class="panel">
             <h3>Key release</h3>
-            <div class="override">
-              <label for="keyUpSound">Sound when a key comes back up</label>
-              <select id="keyUpSound"></select>
+            <div class="form-row">
+              <label for="key-up-sound">Sound when a key is released</label>
+              <select id="key-up-sound"></select>
             </div>
-            <p class="hint">“Pack default” uses the pack’s own release click (Mechanical has one).</p>
-            <h3>Behaviour</h3>
-            <label class="row-toggle">
-              <span>Repeat while a key is held<small>Fires on auto-repeat, like holding Backspace</small></span>
-              <input type="checkbox" id="playOnRepeat" class="switch">
+            <p class="hint">“Pack default” uses the pack’s own release click. Mechanical has one.</p>
+            <h3>Behavior</h3>
+            <label class="row">
+              <span class="row-text">Repeat while a key is held<small>Plays on every auto-repeat, for example when holding Backspace.</small></span>
+              <input type="checkbox" class="switch" data-setting="playOnRepeat">
             </label>
-            <label class="row-toggle">
-              <span>Mouse clicks too<small>Uses the “Mouse” mapping, panned to where you click</small></span>
-              <input type="checkbox" id="mouseClicks" class="switch">
+            <label class="row">
+              <span class="row-text">Mouse clicks<small>Clicks use the “Mouse clicks” mapping and are panned to where you click.</small></span>
+              <input type="checkbox" class="switch" data-setting="mouseClicks">
             </label>
           </div>
         </div>
       </section>
 
-      <!-- ============ Effects ============ -->
-      <section class="page" id="page-effects">
-        <h2>On-screen effects</h2>
-        <p class="muted lead">Bullet holes, lasers, musical notes and combo banners drawn right on your screen. Great for screen recordings and streams.</p>
-        <div class="panel feature-toggle">
-          <label class="row-toggle">
-            <span><strong>Show effects on screen</strong><small>A transparent layer above every app; clicks pass straight through</small></span>
-            <input type="checkbox" id="fxEnabled" class="switch">
+      <!-- Effects -->
+      <section class="page" id="page-effects" aria-labelledby="h-effects" hidden>
+        <div class="page-head">
+          <div>
+            <h2 id="h-effects">On-screen effects</h2>
+            <p class="muted">Draw effects on top of every app as you type. Clicks pass straight through.</p>
+          </div>
+        </div>
+        <div class="panel feature">
+          <label class="row">
+            <span class="row-text"><strong>Show effects on screen</strong><small>Visible in screen recordings and streams.</small></span>
+            <input type="checkbox" class="switch" data-setting="fxEnabled">
           </label>
         </div>
         <div class="columns" id="fx-options">
           <div class="panel">
             <h3>Style</h3>
-            <div class="chips" id="fx-style"></div>
+            <div class="option-grid" id="fx-style" role="radiogroup" aria-label="Effect style"></div>
             <h3>Size</h3>
             <div class="slider-row">
-              <input type="range" id="fxSize" min="50" max="200" step="10" aria-label="Effect size">
-              <output id="fxSize-value" class="pill">100%</output>
+              <input type="range" id="fx-size" min="50" max="200" step="10" aria-label="Effect size">
+              <output id="fx-size-value" class="pill" for="fx-size">100%</output>
             </div>
-            <h3>Where</h3>
-            <div class="segmented" id="fx-position" role="radiogroup" aria-label="Effect position">
-              <button data-value="caret" role="radio">Text cursor</button>
-              <button data-value="mouse" role="radio">Mouse</button>
-              <button data-value="random" role="radio">Anywhere</button>
-            </div>
-            <p class="hint">“Text cursor” works in classic apps like Notepad and Word; elsewhere it follows the mouse.</p>
+            <h3>Position</h3>
+            <div class="segmented" id="fx-position" role="radiogroup" aria-label="Effect position"></div>
+            <p class="hint">Text cursor works in apps like Notepad and Word. Elsewhere, effects follow the mouse.</p>
           </div>
           <div class="panel">
             <h3>Combos</h3>
-            <label class="row-toggle">
-              <span>Combo meter<small>Type without pausing to build a streak. Milestones get a fanfare and a banner</small></span>
-              <input type="checkbox" id="comboEnabled" class="switch">
+            <label class="row">
+              <span class="row-text">Combo meter<small>Keep typing without pausing to build a streak. Milestones get a fanfare and a banner.</small></span>
+              <input type="checkbox" class="switch" data-setting="comboEnabled">
             </label>
-            <label class="row-toggle">
-              <span>Announcer voice<small>“Combo fifty!” in your system’s voice</small></span>
-              <input type="checkbox" id="announcer" class="switch">
+            <label class="row">
+              <span class="row-text">Announcer<small>Reads combo milestones aloud with your system voice.</small></span>
+              <input type="checkbox" class="switch" data-setting="announcer">
             </label>
             <h3>Try it</h3>
-            <textarea rows="4" placeholder="Turn effects on, then mash some keys here…"></textarea>
+            <label class="visually-hidden" for="fx-playground">Effects test area</label>
+            <textarea id="fx-playground" rows="4" placeholder="Turn effects on, then type here."></textarea>
           </div>
         </div>
       </section>
 
-      <!-- ============ Apps ============ -->
-      <section class="page" id="page-apps">
-        <h2>Apps</h2>
-        <p class="muted lead" id="apps-now">Detecting the active app…</p>
+      <!-- Apps -->
+      <section class="page" id="page-apps" aria-labelledby="h-apps" hidden>
+        <div class="page-head">
+          <div>
+            <h2 id="h-apps">Apps</h2>
+            <p class="muted" id="apps-status">Detecting the active app…</p>
+          </div>
+        </div>
         <div class="columns">
           <div class="panel">
             <h3>Auto-mute</h3>
-            <label class="row-toggle" id="row-autoMuteMic">
-              <span>While my microphone is in use<small>Calls, meetings and voice chat stay quiet</small></span>
-              <input type="checkbox" id="autoMuteMic" class="switch">
+            <label class="row" id="row-auto-mute-mic">
+              <span class="row-text">While the microphone is in use<small>Keeps calls, meetings and voice chat quiet.</small></span>
+              <input type="checkbox" class="switch" data-setting="autoMuteMic">
             </label>
-            <label class="row-toggle">
-              <span>In full-screen apps<small>Games, videos and presentations</small></span>
-              <input type="checkbox" id="autoMuteFullscreen" class="switch">
+            <label class="row">
+              <span class="row-text">In full-screen apps<small>Games, videos and presentations.</small></span>
+              <input type="checkbox" class="switch" data-setting="autoMuteFullscreen">
             </label>
           </div>
           <div class="panel">
-            <h3>Per-app profiles</h3>
-            <p class="hint">Use a different sound in specific apps, or mute them. Switch to an app and it appears in the list.</p>
-            <div id="profiles"></div>
+            <h3>Per-app sounds</h3>
+            <p class="hint">Use a different sound in specific apps, or mute them. Apps you switch to appear in the list below.</p>
+            <div id="profiles" class="profile-list"></div>
             <div class="add-profile">
-              <select id="profile-app" aria-label="App"></select>
-              <button class="btn" id="profile-add">Add</button>
-              <button class="btn ghost" id="profile-browse">Browse…</button>
+              <label class="visually-hidden" for="profile-app">App</label>
+              <select id="profile-app"></select>
+              <button class="btn" id="profile-add" type="button"><span data-icon="plus" data-icon-size="16"></span>Add</button>
+              <button class="btn btn-ghost" id="profile-browse" type="button">Browse…</button>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ============ Stats ============ -->
-      <section class="page" id="page-stats">
-        <h2>Your typing</h2>
-        <div class="tiles">
-          <div class="tile hero"><span class="label">Keys today</span><span class="value" id="st-today">0</span></div>
-          <div class="tile"><span class="label">All time</span><span class="value" id="st-total">0</span></div>
-          <div class="tile"><span class="label">Day streak</span><span class="value" id="st-streak">0</span></div>
-          <div class="tile"><span class="label">Speed now</span><span class="value" id="st-wpm">0</span><span class="unit">WPM</span></div>
-          <div class="tile"><span class="label">Best speed</span><span class="value" id="st-best-wpm">0</span><span class="unit">WPM</span></div>
-          <div class="tile"><span class="label">Best combo</span><span class="value" id="st-best-combo">0</span></div>
-        </div>
-
-        <div class="panel">
-          <div class="chart-head">
-            <h3>Keys per day</h3>
-            <span class="muted small">Last 30 days</span>
+      <!-- Stats -->
+      <section class="page" id="page-stats" aria-labelledby="h-stats" hidden>
+        <div class="page-head">
+          <div>
+            <h2 id="h-stats">Stats</h2>
+            <p class="muted">Counts only. Keyboard Sounds never records what you type.</p>
           </div>
-          <div class="chart" id="day-chart" role="img" aria-label="Keys typed per day over the last 30 days"></div>
+        </div>
+        <div class="tiles" id="tiles">
+          <div class="tile hero"><span class="tile-label">Keys today</span><span class="tile-value" id="st-today">–</span></div>
+          <div class="tile"><span class="tile-label">All time</span><span class="tile-value" id="st-total">–</span></div>
+          <div class="tile"><span class="tile-label">Day streak</span><span class="tile-value" id="st-streak">–</span></div>
+          <div class="tile"><span class="tile-label">Speed now</span><span class="tile-value" id="st-wpm">–</span><span class="tile-unit">WPM</span></div>
+          <div class="tile"><span class="tile-label">Best speed</span><span class="tile-value" id="st-best-wpm">–</span><span class="tile-unit">WPM</span></div>
+          <div class="tile"><span class="tile-label">Best combo</span><span class="tile-value" id="st-best-combo">–</span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Keys per day</h3><span class="muted small">Last 30 days</span></div>
+          <div id="day-chart" class="chart" role="img" aria-label="Keys typed per day over the last 30 days"><div class="skeleton chart-skeleton"></div></div>
           <details class="table-view">
             <summary>Show as table</summary>
-            <table id="day-table"><thead><tr><th>Day</th><th>Keys</th></tr></thead><tbody></tbody></table>
+            <table><thead><tr><th scope="col">Day</th><th scope="col">Keys</th></tr></thead><tbody id="day-table"></tbody></table>
           </details>
         </div>
-
         <div class="panel">
-          <div class="chart-head">
+          <div class="panel-head">
             <h3>Most-used keys</h3>
-            <div class="scale-legend"><span class="muted small">Fewer</span><span class="scale-bar"></span><span class="muted small">More</span></div>
+            <div class="scale-legend" aria-hidden="true"><span class="muted small">Fewer</span><span class="scale-bar"></span><span class="muted small">More</span></div>
           </div>
-          <div class="heatmap" id="heatmap"></div>
+          <div id="heatmap" class="heatmap"></div>
         </div>
-
         <div class="panel">
-          <div class="chart-head">
-            <h3>Achievements</h3>
-            <span class="muted small" id="ach-count"></span>
-          </div>
-          <div class="achievements" id="achievements"></div>
+          <div class="panel-head"><h3>Achievements</h3><span class="muted small" id="achievement-count"></span></div>
+          <div id="achievements" class="achievements"></div>
         </div>
       </section>
 
-      <!-- ============ Settings ============ -->
-      <section class="page" id="page-settings">
-        <h2>Settings</h2>
+      <!-- Settings -->
+      <section class="page" id="page-settings" aria-labelledby="h-settings" hidden>
+        <div class="page-head">
+          <div><h2 id="h-settings">Settings</h2></div>
+        </div>
         <div class="columns">
           <div class="panel">
             <h3>General</h3>
-            <label class="row-toggle">
-              <span>Launch at startup<small>Starts quietly in the system tray</small></span>
-              <input type="checkbox" id="launchAtLogin" class="switch">
+            <label class="row">
+              <span class="row-text">Start with your computer<small>Opens quietly in the system tray.</small></span>
+              <input type="checkbox" class="switch" data-setting="launchAtLogin">
             </label>
-            <div class="row-toggle static">
-              <span>Mute / unmute anywhere<small id="hotkey-note">Global shortcut</small></span>
-              <kbd id="hotkey">Ctrl + Alt + M</kbd>
+            <div class="row static">
+              <span class="row-text">Mute or unmute from anywhere<small id="hotkey-note">Keyboard shortcut</small></span>
+              <kbd id="hotkey"></kbd>
             </div>
-            <p class="hint">Closing the window keeps Keyboard Sounds running in the tray. Use the tray icon to quit.</p>
+            <p class="hint">Closing this window keeps the app running in the tray. Quit from the tray menu.</p>
           </div>
           <div class="panel">
             <h3>Updates</h3>
-            <label class="row-toggle">
-              <span>Update automatically<small>Downloads in the background, installs when you quit</small></span>
-              <input type="checkbox" id="autoUpdate" class="switch">
+            <label class="row">
+              <span class="row-text">Update automatically<small>Downloads in the background and installs when you quit.</small></span>
+              <input type="checkbox" class="switch" data-setting="autoUpdate">
             </label>
-            <div class="update-row">
-              <span id="update-status" class="muted">—</span>
-              <button class="btn" id="update-check">Check now</button>
-              <button class="btn primary" id="update-install" hidden>Restart to update</button>
+            <div class="update-box">
+              <p id="update-status" class="muted">–</p>
+              <div class="progress" id="update-progress" hidden><span></span></div>
+              <div class="update-actions">
+                <button class="btn" id="update-check" type="button"><span data-icon="refresh-cw" data-icon-size="16"></span>Check now</button>
+                <button class="btn btn-primary" id="update-install" type="button" hidden>Restart to update</button>
+              </div>
             </div>
           </div>
           <div class="panel">
             <h3>Privacy</h3>
-            <p class="small">Keyboard Sounds listens to key presses only to play sounds. It stores <strong>how many</strong> times each key was pressed (for your stats) — never what you typed, never in what order. Nothing leaves your computer except the update check to GitHub.</p>
+            <p class="small">Keyboard Sounds listens to key presses only to play sounds. It stores how many times each key was pressed, for your stats. It never stores what you type or the order of keys, and nothing leaves your computer apart from the update check.</p>
             <p class="muted small" id="about"></p>
           </div>
         </div>
@@ -259,63 +266,71 @@
   </div>
 
   <!-- Pack editor -->
-  <dialog id="pack-dialog" class="modal">
-    <form method="dialog" class="modal-body" id="pack-form">
+  <dialog id="pack-dialog" class="modal" aria-labelledby="pack-dialog-title">
+    <div class="modal-body">
       <div class="modal-head">
-        <h2>Edit sound pack</h2>
-        <button class="icon-btn" value="close" aria-label="Close">✕</button>
+        <h2 id="pack-dialog-title">Edit sound pack</h2>
+        <button class="icon-button" type="button" data-close aria-label="Close"><span data-icon="x"></span></button>
       </div>
-      <div class="pack-fields">
-        <label>Emoji<input id="pack-emoji" maxlength="8"></label>
-        <label class="grow">Name<input id="pack-name" maxlength="32"></label>
+      <div class="field">
+        <label for="pack-name">Name</label>
+        <input id="pack-name" type="text" maxlength="32" autocomplete="off">
       </div>
-      <h3>Sounds in this pack</h3>
-      <p class="hint">Each key gets one of these, so more sounds = more variety.</p>
-      <ul class="variant-list" id="pack-variants"></ul>
+      <div class="field">
+        <span class="field-label" id="pack-icon-label">Icon</span>
+        <div class="icon-picker" id="pack-icon" role="radiogroup" aria-labelledby="pack-icon-label"></div>
+      </div>
+      <div class="field">
+        <span class="field-label">Sounds in this pack</span>
+        <p class="hint">Each key is assigned one of these, so more sounds means more variety.</p>
+        <ul class="variant-list" id="pack-variants"></ul>
+      </div>
       <div class="modal-actions">
-        <button type="button" class="btn" id="pack-add-files">＋ Add files</button>
-        <button type="button" class="btn" id="pack-record">🎙️ Record</button>
-        <button type="button" class="btn" id="pack-export">⇪ Share (.kbpack)</button>
+        <button class="btn" id="pack-add-files" type="button"><span data-icon="upload" data-icon-size="16"></span>Add files</button>
+        <button class="btn" id="pack-record" type="button"><span data-icon="mic" data-icon-size="16"></span>Record</button>
+        <button class="btn" id="pack-export" type="button"><span data-icon="share-2" data-icon-size="16"></span>Share</button>
         <span class="spacer"></span>
-        <button type="button" class="btn danger" id="pack-delete">Delete pack</button>
+        <button class="btn btn-danger" id="pack-delete" type="button"><span data-icon="trash" data-icon-size="16"></span>Delete</button>
       </div>
-    </form>
+    </div>
   </dialog>
 
   <!-- Recorder -->
-  <dialog id="rec-dialog" class="modal">
-    <form method="dialog" class="modal-body">
+  <dialog id="recorder-dialog" class="modal" aria-labelledby="recorder-title">
+    <div class="modal-body">
       <div class="modal-head">
-        <h2>Record a sound</h2>
-        <button class="icon-btn" value="close" aria-label="Close">✕</button>
+        <h2 id="recorder-title">Record a sound</h2>
+        <button class="icon-button" type="button" data-close aria-label="Close"><span data-icon="x"></span></button>
       </div>
-      <div class="rec-stage">
-        <button type="button" class="rec-button" id="rec-toggle" aria-label="Start recording"><span></span></button>
-        <p class="muted" id="rec-status">Press to record (up to 4 seconds). Clap, snap, say “pew”!</p>
+      <div class="recorder-stage">
+        <button class="record-button" id="record-toggle" type="button" aria-label="Start recording"><span></span></button>
+        <div class="record-meter" id="record-meter" hidden><span></span></div>
+        <p class="muted" id="recorder-status">Press the button and make a short sound, up to 4 seconds.</p>
       </div>
-      <div id="rec-edit" hidden>
-        <canvas id="rec-wave" height="90"></canvas>
+      <div id="recorder-edit" hidden>
+        <canvas id="recorder-wave" height="96" aria-label="Recorded waveform"></canvas>
         <div class="trim">
-          <label>Start<input type="range" id="rec-start" min="0" max="1000" value="0"></label>
-          <label>End<input type="range" id="rec-end" min="0" max="1000" value="1000"></label>
+          <label>Start<input type="range" id="trim-start" min="0" max="1000" value="0"></label>
+          <label>End<input type="range" id="trim-end" min="0" max="1000" value="1000"></label>
         </div>
-        <div class="pack-fields">
-          <label class="grow">Name<input id="rec-name" maxlength="32" value="My recording"></label>
-          <label>Save to<select id="rec-target"></select></label>
+        <div class="field-row">
+          <div class="field grow">
+            <label for="recording-name">Name</label>
+            <input id="recording-name" type="text" maxlength="32" value="My recording" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="recording-target">Save to</label>
+            <select id="recording-target"></select>
+          </div>
         </div>
         <div class="modal-actions">
-          <button type="button" class="btn" id="rec-play">▶ Play</button>
-          <button type="button" class="btn" id="rec-again">↺ Record again</button>
+          <button class="btn" id="recording-play" type="button"><span data-icon="play" data-icon-size="16"></span>Play</button>
+          <button class="btn" id="recording-again" type="button"><span data-icon="rotate-ccw" data-icon-size="16"></span>Record again</button>
           <span class="spacer"></span>
-          <button type="button" class="btn primary" id="rec-save">Save sound</button>
+          <button class="btn btn-primary" id="recording-save" type="button"><span data-icon="check" data-icon-size="16"></span>Save sound</button>
         </div>
       </div>
-    </form>
+    </div>
   </dialog>
-
-  <div class="tooltip" id="tooltip" role="tooltip" hidden></div>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <script src="dashboard.js"></script>
 </body>
 </html>
