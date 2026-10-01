@@ -14,8 +14,8 @@ import { EchoMode } from '../../shared/constants.js';
 /** @type {Readonly<Record<string, EchoPreset>>} */
 const PRESETS = Object.freeze({
   [EchoMode.OFF]: { send: 0, delay: 0.14, feedback: 0.32 },
-  [EchoMode.SHORT]: { send: 0.42, delay: 0.14, feedback: 0.32 },
-  [EchoMode.LONG]: { send: 0.45, delay: 0.3, feedback: 0.5 },
+  [EchoMode.SHORT]: { send: 0.35, delay: 0.14, feedback: 0.32 },
+  [EchoMode.LONG]: { send: 0.38, delay: 0.3, feedback: 0.5 },
 });
 const MAX_DELAY_SECONDS = 1;
 /** Each repeat loses some treble, like a real echo. */
@@ -41,19 +41,25 @@ export class Echo {
     input.connect(this.send).connect(this.delay);
     this.delay.connect(this.tone).connect(this.feedback).connect(this.delay);
     this.delay.connect(output);
-    this.setMode(EchoMode.OFF);
+    this.setMode(EchoMode.OFF, { immediate: true });
   }
 
   /**
-   * Switches preset smoothly. Turning the echo off lets repeats already ringing die out.
+   * Switches preset. Changes glide so nothing clicks, and turning the echo off lets
+   * repeats already ringing die out.
    * @param {string} mode - One of EchoMode.
+   * @param {object} [options]
+   * @param {boolean} [options.immediate=false] - Jump straight to the preset (initial setup).
    * @returns {void}
    */
-  setMode(mode) {
+  setMode(mode, { immediate = false } = {}) {
+    if (mode === this.mode) return;
+    this.mode = mode;
     const preset = PRESETS[mode] ?? PRESETS[EchoMode.OFF];
     const now = this.context.currentTime;
-    this.send.gain.setTargetAtTime(preset.send, now, CHANGE_SMOOTHING_SECONDS);
-    this.delay.delayTime.setTargetAtTime(preset.delay, now, CHANGE_SMOOTHING_SECONDS);
-    this.feedback.gain.setTargetAtTime(preset.feedback, now, CHANGE_SMOOTHING_SECONDS);
+    const apply = (param, value) => (immediate ? param.setValueAtTime(value, now) : param.setTargetAtTime(value, now, CHANGE_SMOOTHING_SECONDS));
+    apply(this.send.gain, preset.send);
+    apply(this.delay.delayTime, preset.delay);
+    apply(this.feedback.gain, preset.feedback);
   }
 }

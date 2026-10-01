@@ -7,6 +7,7 @@ A desktop app that plays a sound on every key press, in every app. Choose from p
 - **16 built-in sound packs**, all synthesized from scratch: Dial Pad, Mechanical, Typewriter, Piano, Harmonium, Marimba, Drum Kit, Pew Pew, Shotgun, Ninja Swoosh, Retro Coin, 8-bit Jump, Bubble Pop, Boing, Squeaky Toy and Bonk. Chaos mode picks a random pack for every key.
 - **Song mode.** Each key press plays the next note of a song (Für Elise, Ode to Joy, In the Hall of the Mountain King and others), so anything you type performs it.
 - **Melody and Wobble modes.** Melody turns the keyboard into a pentatonic instrument; Wobble adds a slight random detune.
+- **Sustain and echo.** Hold a key and tonal packs keep sounding, then fade out when you let go; taps sound as usual. An optional echo makes every sound trail off in fading repeats.
 - **3D stereo.** Keys on the left of the keyboard play in your left ear, keys on the right in your right.
 - **On-screen effects.** Bullet holes, lasers, musical notes, confetti, bubbles and blade slashes appear where you type, with a combo meter and milestone banners.
 - **Per-app sounds.** Use a different pack in each app, or mute specific apps.

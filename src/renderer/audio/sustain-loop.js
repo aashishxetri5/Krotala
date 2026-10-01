@@ -3,23 +3,26 @@
  * while its key is held. Pure functions on sample arrays, unit-tested in
  * test/sustain-loop.test.js.
  *
- * The loop starts just after the attack (once the sound is close to full volume),
- * is levelled so its end is as loud as its start (no pulsing as it repeats), and
- * its end is crossfaded into its start (no click at the seam).
+ * The loop is taken from after the attack, where the sound has decayed to its
+ * sustain level, the way instruments decay and then sustain. It is levelled so its
+ * end is as loud as its start (no pulsing as it repeats), and its end is crossfaded
+ * into its start (no click at the seam).
  */
 
 const FRAME_SECONDS = 0.01;
 /** Frames after the peak that are skipped so the attack transient is not repeated. */
 const ATTACK_SKIP_FRAMES = 2;
-const MIN_LOOP_SECONDS = 0.05;
+const MIN_LOOP_SECONDS = 0.04;
 const MAX_LOOP_SECONDS = 0.3;
 const SEAM_CROSSFADE_SECONDS = 0.03;
 /** The attack is over once the level reaches this fraction of the peak. */
 const ATTACK_END_RATIO = 0.9;
 /** Sounds quieter than this fraction of their peak after the attack do not sustain. */
 const MIN_RELATIVE_LEVEL = 0.04;
-/** The loop region ends where the sound has fallen to this fraction of its starting level. */
-const MIN_REGION_LEVEL = 0.35;
+/** Sustain level: the loop is taken from where the sound has decayed to this fraction. */
+const SUSTAIN_LEVEL = 0.5;
+/** Fallback for sounds that decay too fast to reach SUSTAIN_LEVEL with a usable loop. */
+const MIN_REGION_LEVEL = 0.15;
 /** Limits how much a decaying tail is boosted when levelling. */
 const MAX_LEVEL_BOOST = 8;
 
@@ -45,6 +48,19 @@ function frameLevels(data, frame) {
     levels.push(Math.sqrt(sum / frame));
   }
   return levels;
+}
+
+/**
+ * Finds the last frame, from `first` on, before the level drops to `floor`.
+ * @param {number[]} levels - Level per frame.
+ * @param {number} first - Frame to start from.
+ * @param {number} floor - Level that ends the stretch.
+ * @returns {number} Index of the last frame above the floor.
+ */
+function sustainEnd(levels, first, floor) {
+  let last = first;
+  while (last + 1 < levels.length && levels[last + 1] > floor) last++;
+  return last;
 }
 
 /**
@@ -86,16 +102,21 @@ export function buildSustainLoop(channels, sampleRate) {
   // pick an arbitrary frame of a steady tone, possibly near its end.
   const attackEnd = levels.findIndex((level) => level >= peak * ATTACK_END_RATIO);
   const firstFrame = attackEnd + ATTACK_SKIP_FRAMES;
-  if (firstFrame >= levels.length) return null;
-  // Stop before the sound fades too far, so levelling never has to boost much.
-  const floor = Math.max(peak * MIN_RELATIVE_LEVEL, levels[firstFrame] * MIN_REGION_LEVEL);
-  let lastFrame = firstFrame;
-  const maxFrames = Math.floor((MAX_LOOP_SECONDS * sampleRate) / frame);
-  while (lastFrame + 1 < levels.length && lastFrame - firstFrame < maxFrames && levels[lastFrame + 1] > floor) lastFrame++;
+  if (firstFrame >= levels.length || levels[firstFrame] <= peak * MIN_RELATIVE_LEVEL) return null;
 
-  const start = firstFrame * frame;
-  const length = (lastFrame - firstFrame + 1) * frame;
-  if (levels[firstFrame] <= peak * MIN_RELATIVE_LEVEL || length < MIN_LOOP_SECONDS * sampleRate) return null;
+  // Like an instrument's decay-then-sustain: let the sound decay naturally to about
+  // half its level, and loop the stretch just before that. Taps stay natural for as
+  // long as possible. Sounds that decay too fast for that loop a quieter stretch.
+  const minFrames = Math.ceil((MIN_LOOP_SECONDS * sampleRate) / frame);
+  let lastFrame = sustainEnd(levels, firstFrame, Math.max(peak * MIN_RELATIVE_LEVEL, levels[firstFrame] * SUSTAIN_LEVEL));
+  if (lastFrame - firstFrame + 1 < minFrames) {
+    lastFrame = sustainEnd(levels, firstFrame, Math.max(peak * MIN_RELATIVE_LEVEL, levels[firstFrame] * MIN_REGION_LEVEL));
+  }
+  const regionFrames = Math.min(lastFrame - firstFrame + 1, Math.floor((MAX_LOOP_SECONDS * sampleRate) / frame));
+  if (regionFrames < minFrames) return null;
+
+  const start = (lastFrame - regionFrames + 1) * frame;
+  const length = regionFrames * frame;
 
   const fade = Math.min(Math.round(SEAM_CROSSFADE_SECONDS * sampleRate), Math.floor(length / 3));
   const loopLength = length - fade;

@@ -6,7 +6,7 @@
  * Sustained sounds: a held key first plays its sample normally. If the key is still
  * down when the sample reaches its body, playback hands over to a seamless loop of
  * that body (see sustain-loop.js) until the key is released, then fades out.
- * Releasing earlier simply lets the sample finish, so taps sound the same as ever.
+ * Quick taps keep the sample's natural ending, so typing sounds the same as ever.
  */
 
 import {
@@ -38,8 +38,8 @@ import { buildSustainLoop } from './sustain-loop.js';
  * @property {AudioBufferSourceNode} loop - The sustain loop, scheduled to start at `handOverAt`.
  * @property {GainNode} loopAmp
  * @property {number} gain - Voice gain.
+ * @property {number} startedAt - Context time at which the key was pressed.
  * @property {number} handOverAt - Context time at which the loop takes over.
- * @property {number} naturalEnd - Context time at which the sample would end on its own.
  * @property {number} timer - Safety timeout that releases a voice whose key-up never came.
  */
 
@@ -50,7 +50,9 @@ const NON_PACK_IDS = new Set([MUTE, PACK_DEFAULT, CHAOS_SOUND_ID, '']);
 const Sustain = Object.freeze({
   /** Crossfade from the sample into the loop; both carry identical audio here. */
   HAND_OVER_SECONDS: 0.015,
-  /** Fade-out when the key is released. */
+  /** Holds shorter than this count as taps and keep the sample's natural ending. */
+  TAP_SECONDS: 0.2,
+  /** Fade-out when a held key is released. */
   RELEASE_SECONDS: 0.25,
   /** A held sound stops on its own after this long, in case a key-up is lost. */
   MAX_HOLD_MS: 10_000,
@@ -210,20 +212,20 @@ export class AudioEngine {
     loop.start(handOverAt, loopInfo.offset);
     this.track(loop, loopAmp);
 
+    // The sample keeps running silently under the loop, so a quick release can
+    // return to its natural ending.
     sample.amp.gain.setValueAtTime(gain, handOverAt);
     sample.amp.gain.linearRampToValueAtTime(0, handOverEnd);
-    sample.source.stop(handOverEnd + Sustain.STOP_MARGIN_SECONDS);
 
-    const held = {
-      sample, loop, loopAmp, gain, handOverAt, naturalEnd: now + buffer.duration / rate, timer: 0,
-    };
+    const held = { sample, loop, loopAmp, gain, startedAt: now, handOverAt, timer: 0 };
     held.timer = window.setTimeout(() => this.release(voiceId, held), Sustain.MAX_HOLD_MS);
     this.held.set(voiceId, held);
   }
 
   /**
-   * Ends a held sound: before the hand-over the sample just plays out; after it, the
-   * loop fades away.
+   * Ends a held sound. A tap (released within TAP_SECONDS) keeps or returns to the
+   * sample's natural ending, so typing sounds exactly as without sustain. A longer
+   * hold fades the loop out.
    * @param {string} voiceId - Key name.
    * @param {HeldVoice} [expected] - Only release if this is still the held voice.
    * @returns {void}
@@ -235,19 +237,30 @@ export class AudioEngine {
     clearTimeout(held.timer);
 
     const now = this.context.currentTime;
+    const { sample, loop, loopAmp, gain } = held;
     if (now < held.handOverAt) {
-      // Released early: cancel the loop and let the sample finish untouched.
-      held.loop.stop(now);
-      held.sample.amp.gain.cancelScheduledValues(now);
-      held.sample.amp.gain.setValueAtTime(held.gain, now);
-      held.sample.source.stop(held.naturalEnd + Sustain.STOP_MARGIN_SECONDS); // replaces the scheduled stop
+      // The loop never started: cancel it and let the sample play on untouched.
+      loop.stop(now);
+      sample.amp.gain.cancelScheduledValues(now);
+      sample.amp.gain.setValueAtTime(gain, now);
       return;
     }
-    const level = held.loopAmp.gain.value;
-    held.loopAmp.gain.cancelScheduledValues(now);
-    held.loopAmp.gain.setValueAtTime(level, now);
-    held.loopAmp.gain.linearRampToValueAtTime(0, now + Sustain.RELEASE_SECONDS);
-    held.loop.stop(now + Sustain.RELEASE_SECONDS + Sustain.STOP_MARGIN_SECONDS);
+    const level = loopAmp.gain.value;
+    loopAmp.gain.cancelScheduledValues(now);
+    loopAmp.gain.setValueAtTime(level, now);
+    if (now - held.startedAt < Sustain.TAP_SECONDS) {
+      // A tap that outlasted the hand-over: crossfade back to the sample's own tail.
+      const back = now + Sustain.HAND_OVER_SECONDS;
+      loopAmp.gain.linearRampToValueAtTime(0, back);
+      sample.amp.gain.cancelScheduledValues(now);
+      sample.amp.gain.setValueAtTime(sample.amp.gain.value, now);
+      sample.amp.gain.linearRampToValueAtTime(gain, back);
+      loop.stop(back + Sustain.STOP_MARGIN_SECONDS);
+      return;
+    }
+    loopAmp.gain.linearRampToValueAtTime(0, now + Sustain.RELEASE_SECONDS);
+    loop.stop(now + Sustain.RELEASE_SECONDS + Sustain.STOP_MARGIN_SECONDS);
+    sample.source.stop(now);
   }
 
   /**
@@ -306,11 +319,13 @@ export class AudioEngine {
    * @returns {void}
    */
   applySettings(settings) {
+    const first = !this.settings;
     this.settings = settings;
     if (!settings.enabled) this.releaseAll();
     // A squared curve matches perceived loudness better than a linear one.
     this.master.gain.setTargetAtTime(settings.volume ** 2, this.context.currentTime, VOLUME_SMOOTHING_SECONDS);
-    this.echo.setMode(settings.echo);
+    // The first settings set the echo directly; later changes glide.
+    this.echo.setMode(settings.echo, { immediate: first });
     const referenced = [settings.soundId, settings.keyUpSound, ...Object.values(settings.overrides), ...settings.profiles.map((p) => p.soundId)];
     for (const id of referenced) if (!NON_PACK_IDS.has(id)) this.load(id);
   }
