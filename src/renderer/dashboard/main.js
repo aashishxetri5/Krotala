@@ -3,8 +3,8 @@
  * mounts every page and subscribes to updates from the main process.
  */
 
-import { CHAOS_PACK } from '../../shared/catalog.js';
-import { CHAOS_SOUND_ID, Invoke, Push, ToastKind } from '../../shared/constants.js';
+import { Invoke, Push, ToastKind } from '../../shared/constants.js';
+import { soundName } from '../../shared/names.js';
 import { api } from '../shared/bridge.js';
 import { $, $$, h } from '../shared/dom.js';
 import { formatPercent } from '../shared/format.js';
@@ -87,8 +87,7 @@ function mountHeader(store) {
     enabled.checked = settings.enabled;
     $('#enabled-label').textContent = settings.enabled ? 'On' : 'Off';
     const activeId = runtime.profileSoundId || settings.soundId;
-    const name = activeId === CHAOS_SOUND_ID ? CHAOS_PACK.name : sounds.find((s) => s.id === activeId)?.name ?? '';
-    let text = runtime.muteReason ?? `Playing ${name}`;
+    let text = runtime.muteReason ?? `Playing ${soundName(activeId, sounds)}`;
     if (!runtime.muteReason && runtime.profileSoundId) text += ` in ${runtime.appLabel}`;
     statusText.textContent = text;
     status.classList.remove('loading');
@@ -126,7 +125,13 @@ async function start() {
   api.on(Push.RUNTIME, (runtime) => store.set({ runtime }));
   api.on(Push.STATS, (stats) => store.set({ stats }));
   api.on(Push.UPDATES, (updates) => store.set({ updates }));
-  api.on(Push.SOUNDS_CHANGED, async () => store.set({ sounds: await api.invoke(Invoke.SOUNDS_LIST) }));
+  api.on(Push.SOUNDS_CHANGED, async () => {
+    try {
+      store.set({ sounds: await api.invoke(Invoke.SOUNDS_LIST) });
+    } catch (err) {
+      showError("Couldn't refresh your sounds", err);
+    }
+  });
   api.on(Push.TOAST, (toast) => showToast(toast));
 
   try {

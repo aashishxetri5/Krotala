@@ -19,6 +19,7 @@ import { showError } from './ui/toast.js';
 
 /** @typedef {keyof DashboardState} StateKey */
 
+/** Holds dashboard state and notifies the pages that render each part of it. */
 export class Store {
   constructor() {
     /** @type {DashboardState} */
@@ -59,7 +60,9 @@ export class Store {
    */
   async saveSettings(patch) {
     const previous = this.state.settings;
-    this.set({ settings: { ...previous, ...patch } });
+    // Overrides merge key by key, as they do in the main process.
+    const overrides = patch.overrides ? { ...previous.overrides, ...patch.overrides } : previous.overrides;
+    this.set({ settings: { ...previous, ...patch, overrides } });
     try {
       this.set({ settings: await api.invoke(Invoke.SETTINGS_SET, patch) });
     } catch (err) {

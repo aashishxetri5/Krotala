@@ -6,6 +6,7 @@ import { execFile } from 'node:child_process';
 import { IS_WINDOWS, Timing } from '../constants.js';
 import { MIC_USAGE_KEY, parseActiveMicUsers } from '../core/mic-usage.js';
 
+/** Reports when another app starts or stops using the microphone. */
 export class MicWatcher {
   /**
    * @param {object} options

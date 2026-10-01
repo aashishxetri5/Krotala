@@ -88,7 +88,7 @@ function chunk(type, data) {
  * @param {Buffer} rgba - Non-premultiplied RGBA pixels, row by row.
  * @returns {Buffer} PNG file contents.
  */
-export function encodePng(size, rgba) {
+function encodePng(size, rgba) {
   const stride = size * 4 + 1;
   const raw = Buffer.alloc(stride * size);
   for (let y = 0; y < size; y++) rgba.copy(raw, y * stride + 1, y * size * 4, (y + 1) * size * 4);

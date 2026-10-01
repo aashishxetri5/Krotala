@@ -5,10 +5,11 @@
 
 import { app } from 'electron';
 import { APP_NAME } from '../../shared/constants.js';
-import { DashboardWindowSize, Paths } from '../constants.js';
+import { DashboardWindowSize, MAX_QUEUED_DASHBOARD_MESSAGES, Paths } from '../constants.js';
 import { appIcon } from './app-icons.js';
-import { createWindow, sendTo } from './window-factory.js';
+import { createWindow, sendTo, WindowRole } from './window-factory.js';
 
+/** The settings window. Closing it hides it to the tray instead of quitting. */
 export class DashboardWindow {
   /**
    * @param {object} options
@@ -53,15 +54,29 @@ export class DashboardWindow {
   }
 
   /**
-   * Sends a message now, or once the window has loaded.
+   * Sends a message now, or holds it until the window is visible.
    * @param {string} channel - Push channel.
    * @param {unknown} payload - Message body.
    * @param {object} [options]
-   * @param {boolean} [options.queue=false] - Keep the message if the window is not ready.
+   * @param {boolean} [options.queue=false] - Hold the message while the window is hidden or loading.
    * @returns {void}
    */
   send(channel, payload, { queue = false } = {}) {
-    if (!sendTo(this.win, channel, payload) && queue) this.queue.push({ channel, payload });
+    if (queue && !this.isVisible()) {
+      this.queue.push({ channel, payload });
+      if (this.queue.length > MAX_QUEUED_DASHBOARD_MESSAGES) this.queue.shift();
+      return;
+    }
+    sendTo(this.win, channel, payload);
+  }
+
+  /**
+   * Delivers queued messages once the dashboard is on screen and loaded.
+   * @returns {void}
+   */
+  flushQueue() {
+    if (!this.isVisible()) return;
+    this.queue = this.queue.filter(({ channel, payload }) => !sendTo(this.win, channel, payload));
   }
 
   /**
@@ -86,13 +101,12 @@ export class DashboardWindow {
       backgroundColor: DashboardWindowSize.BACKGROUND,
       autoHideMenuBar: true,
       show: false,
-    }, 'dashboard');
+    }, { label: 'dashboard', role: WindowRole.DASHBOARD });
     this.win.removeMenu();
     this.win.loadFile(Paths.DASHBOARD_HTML);
     this.win.once('ready-to-show', () => this.win.show());
-    this.win.webContents.on('did-finish-load', () => {
-      for (const { channel, payload } of this.queue.splice(0)) sendTo(this.win, channel, payload);
-    });
+    this.win.webContents.on('did-finish-load', () => this.flushQueue());
+    this.win.on('show', () => this.flushQueue());
     this.win.on('close', (e) => {
       if (this.quitting) return;
       e.preventDefault();

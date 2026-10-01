@@ -28,6 +28,7 @@ const clampRate = (rate) => Math.min(Playback.MAX_RATE, Math.max(Playback.MIN_RA
  */
 const semitonesToRate = (semitones) => 2 ** (semitones / 12);
 
+/** Maps key presses to play commands for the current settings, pitch mode and song. */
 export class KeyMapper {
   /**
    * @param {() => SoundPack[]} getSounds - Returns the current sound library.
@@ -181,7 +182,7 @@ export class KeyMapper {
    */
   slotFor(sound, key) {
     if (sound.special?.[key]) return { type: 'special', key };
-    if (sound.id === 'dialpad') {
+    if (sound.digitKeys) {
       const digit = /^(?:Numpad)?(\d)$/.exec(key);
       if (digit) return { type: 'variant', index: Number(digit[1]) };
       if (key === 'NumpadMultiply') return { type: 'variant', index: 10 };

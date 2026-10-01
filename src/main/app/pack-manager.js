@@ -7,7 +7,7 @@ import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { app, dialog } from 'electron';
 import {
-  AUDIO_EXTENSIONS, CUSTOM_PACK_ICONS, Limits, PACK_EXTENSION,
+  AUDIO_EXTENSIONS, CUSTOM_PACK_ICONS, DEFAULT_RECORDING_NAME, Limits, PACK_EXTENSION,
 } from '../../shared/constants.js';
 import { DEFAULT_SETTINGS } from '../settings/schema.js';
 import { cleanText } from '../core/pack-codec.js';
@@ -15,7 +15,6 @@ import { IS_WINDOWS } from '../constants.js';
 
 /** @typedef {import('../../shared/types.js').SoundPack} SoundPack */
 
-const DEFAULT_RECORDING_NAME = 'My recording';
 const RECORDING_ICON = 'mic';
 const EXPORT_FALLBACK_NAME = 'sound-pack';
 

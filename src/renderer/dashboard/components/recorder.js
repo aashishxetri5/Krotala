@@ -3,23 +3,26 @@
  * new pack or as an extra sound in an existing pack.
  */
 
-import { Invoke, Limits, ToastKind } from '../../../shared/constants.js';
+import {
+  DEFAULT_RECORDING_NAME, Invoke, Limits, ToastKind,
+} from '../../../shared/constants.js';
 import { api } from '../../shared/bridge.js';
 import { $, setOptions } from '../../shared/dom.js';
 import { withBusy } from '../ui/busy.js';
 import { showError, showToast } from '../ui/toast.js';
-import { encodeWav, findSoundBounds, mixToMono } from '../lib/wav.js';
+import { encodeWav, findSoundBounds, mixToMono } from '../../../shared/wav.js';
 
 const TRIM_STEPS = 1000;
 const MIN_SELECTION_SECONDS = 0.02;
 const NEW_PACK = '';
 const STATUS = {
-  idle: 'Press the button and make a short sound, up to 4 seconds.',
+  idle: `Press the button and make a short sound, up to ${Limits.MAX_RECORDING_MS / 1000} seconds.`,
   recording: 'Recording… press again to stop.',
   processing: 'Processing…',
   editing: 'Trim the sound, name it, and save.',
 };
 
+/** The dialog for recording, trimming and saving a sound. */
 export class Recorder {
   /**
    * @param {import('../store.js').Store} store - Dashboard store.
@@ -36,6 +39,9 @@ export class Recorder {
     this.trimEnd = /** @type {HTMLInputElement} */ ($('#trim-end'));
     this.nameInput = /** @type {HTMLInputElement} */ ($('#recording-name'));
     this.target = /** @type {HTMLSelectElement} */ ($('#recording-target'));
+    this.nameInput.maxLength = Limits.PACK_NAME_LENGTH;
+    this.trimStart.max = String(TRIM_STEPS);
+    this.trimEnd.max = String(TRIM_STEPS);
 
     /** @type {MediaStream | null} */
     this.stream = null;
@@ -58,7 +64,11 @@ export class Recorder {
     $('[data-close]', this.dialog).addEventListener('click', () => this.dialog.close());
     this.trimStart.addEventListener('input', () => this.drawWave());
     this.trimEnd.addEventListener('input', () => this.drawWave());
-    this.dialog.addEventListener('close', () => this.stop());
+    this.dialog.addEventListener('close', () => {
+      this.stop();
+      this.audioContext?.close();
+      this.audioContext = null;
+    });
   }
 
   /** @returns {boolean} True while the microphone is recording. */
@@ -73,6 +83,7 @@ export class Recorder {
    */
   open(packId = null) {
     this.samples = null;
+    this.nameInput.value = DEFAULT_RECORDING_NAME;
     this.setState('idle');
     const customPacks = this.store.state.sounds.filter((s) => s.custom);
     setOptions(this.target, [
@@ -103,9 +114,15 @@ export class Recorder {
   async start() {
     try {
       if (!(await api.invoke(Invoke.MIC_REQUEST))) throw new Error('Allow microphone access in your system settings.');
-      this.stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
       });
+      // The dialog may have been closed while the permission prompt was open.
+      if (!this.dialog.open) {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      this.stream = stream;
     } catch (err) {
       showError("Couldn't access the microphone", err instanceof DOMException ? 'No microphone was found, or access was blocked.' : err);
       return;

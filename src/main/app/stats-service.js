@@ -6,6 +6,7 @@ import { Timing } from '../constants.js';
 import { JsonStore } from '../core/json-store.js';
 import { StatsTracker } from '../core/stats-tracker.js';
 
+/** Typing statistics with persistence: wraps StatsTracker and saves it to stats.json. */
 export class StatsService {
   /**
    * @param {string} file - Path of stats.json.
@@ -39,7 +40,7 @@ export class StatsService {
     return result;
   }
 
-  /** @returns {object} Snapshot for the Stats page. */
+  /** @returns {import('../core/stats-tracker.js').StatsSnapshot} Snapshot for the Stats page. */
   snapshot() {
     return this.tracker.snapshot();
   }

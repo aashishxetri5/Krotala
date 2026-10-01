@@ -72,6 +72,7 @@ export const CUSTOM_PACK_ICONS = Object.freeze([
   'flame', 'zap', 'guitar', 'drum', 'gamepad-2', 'cat', 'radio', 'disc-3',
 ]);
 export const DEFAULT_CUSTOM_ICON = 'music';
+export const DEFAULT_RECORDING_NAME = 'My recording';
 
 export const AUDIO_EXTENSIONS = Object.freeze(['wav', 'mp3', 'ogg', 'flac', 'm4a', 'aac', 'opus', 'webm']);
 export const PACK_EXTENSION = 'kbpack';
@@ -90,6 +91,8 @@ export const Limits = Object.freeze({
   MAX_PACK_FILES: 64,
   MAX_RECORDING_BYTES: 5 * 1024 * 1024,
   MAX_RECORDING_MS: 4000,
+  /** Longer samples are cut to this length when decoded, to bound memory use. */
+  MAX_SAMPLE_SECONDS: 10,
 });
 
 /** Rules that define the typing statistics. The Stats page explains them to users. */
@@ -160,6 +163,8 @@ export const Invoke = Object.freeze({
 export const Send = Object.freeze({
   PREVIEW: 'sound:preview',
   AUDIO_ERROR: 'audio:error',
+  /** The audio engine could not sustain a held key's sound. */
+  SUSTAIN_UNAVAILABLE: 'audio:sustain-unavailable',
 });
 
 /** Push channels (main → renderer). */

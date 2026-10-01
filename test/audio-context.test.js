@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { MUTE } from '../src/shared/constants.js';
-import { appLabel, resolveAudioContext } from '../src/main/core/audio-context.js';
+import { resolveAudioContext } from '../src/main/core/audio-context.js';
+import { appLabel } from '../src/shared/names.js';
 import { parseActiveMicUsers } from '../src/main/core/mic-usage.js';
 import { DEFAULT_SETTINGS } from '../src/main/settings/schema.js';
 

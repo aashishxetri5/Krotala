@@ -10,7 +10,11 @@ import { BUILT_IN_SOUNDS, SYSTEM_SOUND_FILES } from '../../shared/catalog.js';
 import {
   AUDIO_EXTENSIONS, CUSTOM_CATEGORY, DEFAULT_CUSTOM_ICON, Limits, UI_SOUND_PREFIX,
 } from '../../shared/constants.js';
-import { cleanIcon, cleanText, decodePack, encodePack } from '../core/pack-codec.js';
+import { formatMegabytes } from '../../shared/names.js';
+import { WAV_HEADER_BYTES } from '../../shared/wav.js';
+import {
+  cleanIcon, cleanText, decodePack, encodePack, PackError,
+} from '../core/pack-codec.js';
 
 /** @typedef {import('../../shared/types.js').SoundPack} SoundPack */
 
@@ -22,7 +26,6 @@ import { cleanIcon, cleanText, decodePack, encodePack } from '../core/pack-codec
  * @property {Buffer[]} release
  */
 
-const WAV_HEADER_BYTES = 44;
 const DEFAULT_IMPORT_NAME = 'My sounds';
 
 /**
@@ -37,6 +40,7 @@ const randomHex = () => crypto.randomBytes(4).toString('hex');
  */
 const describeCount = (count) => `${count} sound${count === 1 ? '' : 's'} by you`;
 
+/** Reads and writes the sound files behind built-in and user packs. */
 export class SoundLibrary {
   /**
    * @param {object} dirs
@@ -157,10 +161,18 @@ export class SoundLibrary {
    * @throws {import('../core/pack-codec.js').PackError} When the file is invalid.
    */
   async importPackFile(filePath) {
+    if ((await fs.stat(filePath)).size > Limits.MAX_PACK_BYTES) {
+      throw new PackError(`The pack is larger than ${formatMegabytes(Limits.MAX_PACK_BYTES)}.`);
+    }
     const decoded = decodePack(await fs.readFile(filePath));
+    // Only files the pack uses are stored; anything else could never be cleaned up.
+    const used = new Set([...decoded.variants, ...Object.values(decoded.special), ...decoded.release]);
     const stored = {};
-    for (const [name, bytes] of Object.entries(decoded.files)) {
-      stored[name] = await this.storeBytes(bytes, path.extname(name).slice(1));
+    try {
+      for (const name of used) stored[name] = await this.storeBytes(decoded.files[name], path.extname(name).slice(1));
+    } catch (err) {
+      await this.deleteFiles(Object.values(stored));
+      throw err;
     }
     return this.createPack({
       name: decoded.name,
@@ -244,17 +256,23 @@ export class SoundLibrary {
   async copyAudioFiles(filePaths) {
     const files = [];
     const skipped = [];
-    for (const source of filePaths) {
-      const label = path.basename(source);
-      const extension = path.extname(source).slice(1).toLowerCase();
-      const stat = await fs.stat(source).catch(() => null);
-      if (!stat || !AUDIO_EXTENSIONS.includes(extension)) {
-        skipped.push(`${label} (unsupported format)`);
-      } else if (stat.size > Limits.MAX_IMPORT_BYTES) {
-        skipped.push(`${label} (larger than 10 MB)`);
-      } else {
-        files.push(await this.storeBytes(await fs.readFile(source), extension));
+    try {
+      for (const source of filePaths) {
+        const label = path.basename(source);
+        const extension = path.extname(source).slice(1).toLowerCase();
+        const stat = await fs.stat(source).catch(() => null);
+        if (!stat || !AUDIO_EXTENSIONS.includes(extension)) {
+          skipped.push(`${label} (unsupported format)`);
+        } else if (stat.size > Limits.MAX_IMPORT_BYTES) {
+          skipped.push(`${label} (larger than ${formatMegabytes(Limits.MAX_IMPORT_BYTES)})`);
+        } else {
+          files.push(await this.storeBytes(await fs.readFile(source), extension));
+        }
       }
+    } catch (err) {
+      // Don't leave half an import behind.
+      await this.deleteFiles(files);
+      throw err;
     }
     return { files, skipped };
   }

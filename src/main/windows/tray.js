@@ -4,17 +4,12 @@
 
 import { Menu, Tray } from 'electron';
 import { CHAOS_PACK } from '../../shared/catalog.js';
-import { APP_NAME, CHAOS_SOUND_ID, PitchMode } from '../../shared/constants.js';
+import { APP_NAME, CHAOS_SOUND_ID } from '../../shared/constants.js';
+import { PITCH_MODE_LABELS } from '../../shared/names.js';
 import { Hotkey, IS_MAC } from '../constants.js';
 import { trayIcon } from './app-icons.js';
 
 const VOLUME_STEPS = [0.1, 0.25, 0.5, 0.75, 1];
-const PITCH_LABELS = [
-  [PitchMode.OFF, 'Normal'],
-  [PitchMode.WOBBLE, 'Wobble'],
-  [PitchMode.MELODY, 'Melody'],
-  [PitchMode.SONG, 'Song mode'],
-];
 
 /**
  * @typedef {object} TrayActions
@@ -32,6 +27,7 @@ const PITCH_LABELS = [
  * @property {string} activeSoundName
  */
 
+/** The tray icon, its tooltip and its menu. */
 export class TrayController {
   /**
    * @param {TrayActions} actions - Menu callbacks.
@@ -60,7 +56,7 @@ export class TrayController {
       radio(CHAOS_PACK.name, settings.soundId === CHAOS_SOUND_ID, { soundId: CHAOS_SOUND_ID }),
     ];
     const volumeItems = VOLUME_STEPS.map((v) => radio(`${Math.round(v * 100)}%`, Math.abs(settings.volume - v) < 0.005, { volume: v }));
-    const pitchItems = PITCH_LABELS.map(([mode, label]) => radio(label, settings.pitchMode === mode, { pitchMode: mode }));
+    const pitchItems = Object.entries(PITCH_MODE_LABELS).map(([mode, label]) => radio(label, settings.pitchMode === mode, { pitchMode: mode }));
 
     this.tray.setContextMenu(Menu.buildFromTemplate([
       { label: 'Open Dashboard', click: actions.openDashboard },

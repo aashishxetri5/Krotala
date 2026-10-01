@@ -25,9 +25,34 @@ const ICON_GRID = 24;
  * @property {number} [drag] - Exponential slow-down rate (1/s).
  * @property {number} [rot] - Rotation (radians).
  * @property {number} [vr] - Angular velocity (radians/s).
+ * @property {string} [color] - Stroke or fill colour.
+ * @property {string} [icon] - Icon name, for 'icon' particles.
+ * @property {boolean} [glow] - Draw with a coloured glow instead of a shadow.
+ * @property {number} [size] - Icon size in pixels.
+ * @property {number} [sway] - Phase of the side-to-side sway.
+ * @property {number} [r] - Radius (bubbles, bullet holes).
+ * @property {number} [r0] - Start radius (rings, shockwaves).
+ * @property {number} [r1] - End radius (rings, shockwaves).
+ * @property {number} [width] - Line width.
+ * @property {number} [w] - Width (confetti).
+ * @property {number} [h] - Height (confetti).
+ * @property {[number, number, number][]} [cracks] - Bullet-hole cracks as [angle, length, bend].
+ * @property {number} [angle] - Direction (beams, slashes).
+ * @property {number} [len] - Length (beams, slashes).
  */
 
+/**
+ * @param {number} min - Lower bound.
+ * @param {number} max - Upper bound.
+ * @returns {number} Random number in [min, max).
+ */
 const rand = (min, max) => min + Math.random() * (max - min);
+
+/**
+ * @template T
+ * @param {T[]} list - Choices.
+ * @returns {T} A random element.
+ */
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
 /**
@@ -166,6 +191,18 @@ export function draw(g, p, t) {
   g.restore();
 }
 
+/**
+ * Renders one particle for the current frame.
+ * @callback Drawer
+ * @param {CanvasRenderingContext2D} g - Canvas context (state is saved and restored around the call).
+ * @param {Particle} p - Particle to draw.
+ * @param {number} k - Progress through its life, 0–1.
+ * @param {number} fade - `1 - k`, for fading out.
+ * @param {number} t - Time in seconds, for sway and wobble.
+ * @returns {void}
+ */
+
+/** @type {Readonly<Record<string, Drawer>>} Drawer for each particle kind. */
 const DRAWERS = {
   icon(g, p, k, fade, t) {
     const pop = Math.min(1, p.life / 0.08);

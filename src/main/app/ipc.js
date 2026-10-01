@@ -46,6 +46,7 @@ function on(channel, handler) {
 }
 
 /**
+ * Registers every IPC handler the windows use.
  * @param {object} deps
  * @param {import('../settings/settings-service.js').SettingsService} deps.settings
  * @param {import('./pack-manager.js').PackManager} deps.packs
@@ -91,7 +92,9 @@ export function registerIpc({ settings, packs, stats, context, mapper, playback,
   handle(Invoke.PROFILES_BROWSE, () => packs.browseForApp());
 
   on(Send.PREVIEW, (request) => playback.preview(request));
-  on(Send.AUDIO_ERROR, ({ id } = {}) => {
+  on(Send.SUSTAIN_UNAVAILABLE, ({ voice } = {}) => playback.sustainUnavailable(voice));
+  on(Send.AUDIO_ERROR, ({ id, message } = {}) => {
+    console.warn(`Could not decode ${id}: ${message}`);
     const name = packs.list().find((s) => s.id === id)?.name ?? 'a sound';
     notifier.error(`Couldn't play ${name}`, 'The file may be damaged or in an unsupported format.');
   });

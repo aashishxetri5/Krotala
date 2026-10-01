@@ -6,22 +6,42 @@ import { app, BrowserWindow } from 'electron';
 import { Invoke, Push, Send } from '../../shared/constants.js';
 import { Paths } from '../constants.js';
 
-/** Argument prefix the preload script reads its channel allow-list from. */
-export const IPC_ARGUMENT = '--ipc-channels=';
+/** Argument prefix the preload script reads its channel allow-list from (must match src/preload.cjs). */
+const IPC_ARGUMENT = '--ipc-channels=';
 
-const ipcArgument = IPC_ARGUMENT + Buffer.from(JSON.stringify({
-  invoke: Object.values(Invoke),
-  send: Object.values(Send),
-  listen: Object.values(Push),
-})).toString('base64');
+/**
+ * Which IPC channels each kind of window may use. The preload bridge only exposes
+ * these, so a window can never reach handlers meant for another.
+ * @type {Readonly<Record<string, { invoke: string[], send: string[], listen: string[] }>>}
+ */
+export const WindowRole = Object.freeze({
+  DASHBOARD: {
+    invoke: Object.values(Invoke).filter((channel) => channel !== Invoke.SOUND_DATA),
+    send: [Send.PREVIEW],
+    listen: [Push.SETTINGS, Push.STATS, Push.RUNTIME, Push.UPDATES, Push.SOUNDS_CHANGED, Push.TOAST],
+  },
+  AUDIO: {
+    invoke: [Invoke.SETTINGS_GET, Invoke.SOUNDS_LIST, Invoke.SOUND_DATA],
+    send: [Send.AUDIO_ERROR, Send.SUSTAIN_UNAVAILABLE],
+    listen: [Push.PLAY, Push.RELEASE, Push.SETTINGS, Push.SOUNDS_CHANGED],
+  },
+  OVERLAY: {
+    invoke: [],
+    send: [],
+    listen: [Push.FX, Push.COMBO, Push.BANNER],
+  },
+});
 
 /**
  * Creates a sandboxed window that loads the shared preload bridge.
  * @param {Electron.BrowserWindowConstructorOptions} options - Window options.
- * @param {string} label - Name used in development console output.
+ * @param {object} access
+ * @param {string} access.label - Name used in development console output.
+ * @param {{ invoke: string[], send: string[], listen: string[] }} access.role - Channels the window may use (a WindowRole).
  * @returns {BrowserWindow} The new window.
  */
-export function createWindow(options, label) {
+export function createWindow(options, { label, role }) {
+  const channels = IPC_ARGUMENT + Buffer.from(JSON.stringify(role)).toString('base64');
   const win = new BrowserWindow({
     ...options,
     webPreferences: {
@@ -29,7 +49,7 @@ export function createWindow(options, label) {
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
-      additionalArguments: [ipcArgument],
+      additionalArguments: [channels],
       ...options.webPreferences,
     },
   });

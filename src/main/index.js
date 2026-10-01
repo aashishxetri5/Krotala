@@ -3,9 +3,9 @@
  */
 
 import path from 'node:path';
-import { app, globalShortcut } from 'electron';
-import { CHAOS_PACK } from '../shared/catalog.js';
+import { app, globalShortcut, screen } from 'electron';
 import { APP_ID, APP_NAME, CHAOS_SOUND_ID, Push } from '../shared/constants.js';
+import { soundName } from '../shared/names.js';
 import { ContextMonitor } from './app/context-monitor.js';
 import { registerIpc } from './app/ipc.js';
 import { Notifier } from './app/notifier.js';
@@ -16,7 +16,7 @@ import { Hotkey, IS_WINDOWS, Paths, Timing } from './constants.js';
 import { KeyMapper } from './core/keymap.js';
 import { DEFAULT_SETTINGS } from './settings/schema.js';
 import { SettingsService } from './settings/settings-service.js';
-import { initForeground } from './services/foreground.js';
+import { getCaretPoint, initForeground } from './services/foreground.js';
 import { InputHook } from './services/input-hook.js';
 import { SoundLibrary } from './services/sound-library.js';
 import {
@@ -65,7 +65,9 @@ async function startApp() {
   const overlay = new OverlayManager();
   const notifier = new Notifier(dashboard);
   const context = new ContextMonitor(settings);
-  const playback = new PlaybackController({ settings, mapper, context, stats, audio, overlay, notifier });
+  const playback = new PlaybackController({
+    settings, mapper, context, stats, audio, overlay, notifier, screen, getCaretPoint,
+  });
   const updater = new Updater((state) => dashboard.send(Push.UPDATES, state));
   const input = new InputHook();
 
@@ -78,13 +80,20 @@ async function startApp() {
     quit: () => app.quit(),
   });
 
+  /**
+   * Refreshes the tray icon, tooltip and menu.
+   * @returns {void}
+   */
   const updateTray = () => {
     const s = settings.get();
     const activeId = context.profileSoundId || s.soundId;
-    const activeSoundName = activeId === CHAOS_SOUND_ID ? CHAOS_PACK.name : packs.list().find((p) => p.id === activeId)?.name ?? '';
-    tray.update({ settings: s, sounds: packs.list(), muteReason: context.muteReason, activeSoundName });
+    tray.update({ settings: s, sounds: packs.list(), muteReason: context.muteReason, activeSoundName: soundName(activeId, packs.list()) });
   };
 
+  /**
+   * The first time the dashboard is closed, explains that the app keeps running in the tray.
+   * @returns {void}
+   */
   function showTrayHintOnce() {
     if (settings.get().hasShownTrayHint) return;
     settings.set({ hasShownTrayHint: true });

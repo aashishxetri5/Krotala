@@ -18,8 +18,8 @@ const ICON_NAMES = [
   // Navigation and actions
   'audio-lines', 'keyboard', 'wand-sparkles', 'app-window', 'chart-column', 'settings',
   'play', 'square-pen', 'trash', 'plus', 'x', 'check', 'rotate-ccw', 'upload', 'share-2', 'mic',
-  'circle-stop', 'scissors', 'info', 'circle-check', 'circle-alert', 'triangle-alert', 'loader-circle',
-  'volume-2', 'volume-x', 'power', 'refresh-cw', 'lock', 'monitor', 'mouse-pointer-click', 'trophy',
+  'info', 'circle-check', 'circle-alert', 'triangle-alert', 'loader-circle',
+  'volume-2', 'refresh-cw', 'lock', 'trophy',
   // Sound packs
   'phone', 'type', 'piano', 'keyboard-music', 'music-4', 'drum', 'zap', 'crosshair', 'swords',
   'coins', 'gamepad-2', 'droplets', 'activity', 'bird', 'hammer', 'dices', 'music', 'music-2',
@@ -30,6 +30,10 @@ const ICON_NAMES = [
   'calendar-check', 'calendar-days', 'moon',
 ];
 
+/**
+ * @param {string | undefined} v - SVG attribute value.
+ * @returns {number} The value as a number (0 when missing).
+ */
 const num = (v) => Number(v ?? 0);
 
 /**

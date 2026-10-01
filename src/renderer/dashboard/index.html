@@ -135,7 +135,7 @@
             <div class="option-grid" id="fx-style" role="radiogroup" aria-label="Effect style"></div>
             <h3>Size</h3>
             <div class="slider-row">
-              <input type="range" id="fx-size" min="50" max="200" step="10" aria-label="Effect size">
+              <input type="range" id="fx-size" step="10" aria-label="Effect size">
               <output id="fx-size-value" class="pill" for="fx-size">100%</output>
             </div>
             <h3>Position</h3>
@@ -219,8 +219,8 @@
           </div>
         </div>
         <div class="panel">
-          <div class="panel-head"><h3>Keys per day</h3><span class="muted small">Last 30 days</span></div>
-          <div id="day-chart" class="chart" role="img" aria-label="Keys typed per day over the last 30 days"><div class="skeleton chart-skeleton"></div></div>
+          <div class="panel-head"><h3>Keys per day</h3><span class="muted small" id="day-chart-range"></span></div>
+          <div id="day-chart" class="chart" role="img" aria-label="Keys typed per day"><div class="skeleton chart-skeleton"></div></div>
           <details class="table-view">
             <summary>Show as table</summary>
             <table><thead><tr><th scope="col">Day</th><th scope="col">Keys</th></tr></thead><tbody id="day-table"></tbody></table>
@@ -291,7 +291,7 @@
       </div>
       <div class="field">
         <label for="pack-name">Name</label>
-        <input id="pack-name" type="text" maxlength="32" autocomplete="off" autofocus>
+        <input id="pack-name" type="text" autocomplete="off" autofocus>
       </div>
       <div class="field">
         <span class="field-label" id="pack-icon-label">Icon</span>
@@ -326,18 +326,18 @@
       <div class="recorder-stage">
         <button class="record-button" id="record-toggle" type="button" aria-label="Start recording" autofocus><span></span></button>
         <div class="record-meter" id="record-meter" hidden><span></span></div>
-        <p class="muted" id="recorder-status">Press the button and make a short sound, up to 4 seconds.</p>
+        <p class="muted" id="recorder-status"></p>
       </div>
       <div id="recorder-edit" hidden>
         <canvas id="recorder-wave" height="96" aria-label="Recorded waveform"></canvas>
         <div class="trim">
-          <label>Start<input type="range" id="trim-start" min="0" max="1000" value="0"></label>
-          <label>End<input type="range" id="trim-end" min="0" max="1000" value="1000"></label>
+          <label>Start<input type="range" id="trim-start" min="0"></label>
+          <label>End<input type="range" id="trim-end" min="0"></label>
         </div>
         <div class="field-row">
           <div class="field grow">
             <label for="recording-name">Name</label>
-            <input id="recording-name" type="text" maxlength="32" value="My recording" autocomplete="off">
+            <input id="recording-name" type="text" autocomplete="off">
           </div>
           <div class="field">
             <label for="recording-target">Save to</label>

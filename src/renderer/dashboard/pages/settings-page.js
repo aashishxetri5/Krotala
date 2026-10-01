@@ -2,7 +2,7 @@
  * @file Settings page: shortcut info, update status and controls, version.
  */
 
-import { Invoke, UpdateStatus } from '../../../shared/constants.js';
+import { APP_NAME, Invoke, UpdateStatus } from '../../../shared/constants.js';
 import { api } from '../../shared/bridge.js';
 import { $ } from '../../shared/dom.js';
 import { describeUpdate } from '../copy.js';
@@ -28,13 +28,19 @@ export function mountSettingsPage(store) {
       showError("Couldn't check for updates", err);
     }
   });
-  installButton.addEventListener('click', () => api.invoke(Invoke.UPDATES_INSTALL));
+  installButton.addEventListener('click', async () => {
+    try {
+      await withBusy(installButton, () => api.invoke(Invoke.UPDATES_INSTALL));
+    } catch (err) {
+      showError("Couldn't install the update", err);
+    }
+  });
 
   store.subscribe(['info'], ({ info }) => {
     if (!info) return;
     $('#hotkey').textContent = info.hotkey;
     if (!info.hotkeyRegistered) $('#hotkey-note').textContent = 'Unavailable: another app is using this shortcut.';
-    $('#about').textContent = `Keyboard Sounds ${info.version}`;
+    $('#about').textContent = `${APP_NAME} ${info.version}`;
   });
 
   store.subscribe(['updates'], ({ updates }) => {

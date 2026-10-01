@@ -13,6 +13,7 @@ import { appIcon } from '../windows/app-icons.js';
  * @property {string} [message] - Optional detail line.
  */
 
+/** Sends toasts to the dashboard and OS notifications. */
 export class Notifier {
   /**
    * @param {import('../windows/dashboard-window.js').DashboardWindow} dashboard - Dashboard window.
@@ -22,7 +23,7 @@ export class Notifier {
   }
 
   /**
-   * Shows a toast in the dashboard, queued until the dashboard is open.
+   * Shows a toast in the dashboard, held until the dashboard is visible.
    * @param {ToastMessage} toast - Toast content.
    * @returns {void}
    */

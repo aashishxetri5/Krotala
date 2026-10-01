@@ -35,9 +35,20 @@ export const DEFAULT_SETTINGS = Object.freeze({
   hasShownTrayHint: false,
 });
 
+/** @param {unknown} v - Value. @returns {boolean} True for booleans. */
 const isBoolean = (v) => typeof v === 'boolean';
+/** @param {unknown} v - Value. @returns {boolean} True for strings short enough to be an id. */
 const isId = (v) => typeof v === 'string' && v.length < Limits.MAX_ID_LENGTH;
+/**
+ * @param {number} min - Lowest allowed value.
+ * @param {number} max - Highest allowed value.
+ * @returns {(v: unknown) => boolean} Validator for finite numbers in the range.
+ */
 const isNumberIn = (min, max) => (v) => typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max;
+/**
+ * @param {Record<string, string>} values - Enum object.
+ * @returns {(v: unknown) => boolean} Validator for the enum's values.
+ */
 const isOneOf = (values) => (v) => Object.values(values).includes(v);
 
 /**

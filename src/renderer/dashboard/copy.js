@@ -5,6 +5,7 @@
 import {
   EchoMode, FxPosition, FxStyle, PitchMode, StatsRules, UpdateStatus,
 } from '../../shared/constants.js';
+import { PITCH_MODE_LABELS } from '../../shared/names.js';
 
 /**
  * @param {number} ms - Duration.
@@ -35,10 +36,10 @@ export const PAGES = Object.freeze([
 export const DEFAULT_PAGE = 'sounds';
 
 export const PITCH_MODES = Object.freeze([
-  { value: PitchMode.OFF, label: 'Normal', hint: 'Every key plays the sound at its natural pitch.' },
-  { value: PitchMode.WOBBLE, label: 'Wobble', hint: 'A slight random detune on each press, so repeated keys sound less mechanical.' },
-  { value: PitchMode.MELODY, label: 'Melody', hint: 'Each key is a note on a pentatonic scale. Works best with Piano, Harmonium or Marimba.' },
-  { value: PitchMode.SONG, label: 'Song', hint: 'Every key press plays the next note of the chosen song.' },
+  { value: PitchMode.OFF, label: PITCH_MODE_LABELS[PitchMode.OFF], hint: 'Every key plays the sound at its natural pitch.' },
+  { value: PitchMode.WOBBLE, label: PITCH_MODE_LABELS[PitchMode.WOBBLE], hint: 'A slight random detune on each press, so repeated keys sound less mechanical.' },
+  { value: PitchMode.MELODY, label: PITCH_MODE_LABELS[PitchMode.MELODY], hint: 'Each key is a note on a pentatonic scale. Works best with Piano, Harmonium or Marimba.' },
+  { value: PitchMode.SONG, label: PITCH_MODE_LABELS[PitchMode.SONG], hint: 'Every key press plays the next note of the chosen song.' },
 ]);
 
 export const ECHO_MODES = Object.freeze([

@@ -22,10 +22,11 @@ const MAX_DELAY_SECONDS = 1;
 const REPEAT_TONE_HZ = 3500;
 const CHANGE_SMOOTHING_SECONDS = 0.05;
 
+/** A feedback delay whose repeats get quieter and darker. */
 export class Echo {
   /**
    * Inserts the echo between `input` and `output`; the dry path is left to the caller.
-   * @param {AudioContext} context - Audio context.
+   * @param {BaseAudioContext} context - Audio context (live or offline).
    * @param {AudioNode} input - Signal to echo.
    * @param {AudioNode} output - Where the repeats go.
    */

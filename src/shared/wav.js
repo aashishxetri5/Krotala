@@ -1,8 +1,11 @@
 /**
- * @file Audio helpers for recordings: mono mixdown, silence trimming and WAV encoding.
- * Pure functions with no DOM access, unit-tested in test/wav.test.js.
+ * @file WAV encoding plus helpers for recordings (mono mixdown, silence trimming).
+ * Pure functions used by the dashboard recorder and the sound generator, unit-tested
+ * in test/wav.test.js.
  */
 
+/** Size of the canonical PCM WAV header. */
+export const WAV_HEADER_BYTES = 44;
 const PEAK_TARGET = 0.9;
 const FADE_SECONDS = 0.005;
 const TRIM_THRESHOLD_MIN = 0.01;
@@ -52,16 +55,19 @@ export function findSoundBounds(samples, sampleRate) {
 }
 
 /**
- * Encodes mono samples as a normalized 16-bit PCM WAV file with short fades.
+ * Encodes mono samples as a 16-bit PCM WAV file.
  * @param {Float32Array} samples - Audio samples in [-1, 1].
  * @param {number} sampleRate - Samples per second.
+ * @param {object} [options]
+ * @param {boolean} [options.normalize=true] - Scale so the loudest sample reaches 0.9.
+ * @param {number} [options.fadeSeconds] - Fade in and out to avoid clicks (default 5 ms).
  * @returns {Uint8Array} WAV file bytes.
  */
-export function encodeWav(samples, sampleRate) {
+export function encodeWav(samples, sampleRate, { normalize = true, fadeSeconds = FADE_SECONDS } = {}) {
   const peak = peakOf(samples);
-  const gain = peak > 0 ? PEAK_TARGET / peak : 1;
-  const fade = Math.min(Math.round(FADE_SECONDS * sampleRate), Math.floor(samples.length / 2));
-  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const gain = normalize && peak > 0 ? PEAK_TARGET / peak : 1;
+  const fade = Math.min(Math.round(fadeSeconds * sampleRate), Math.floor(samples.length / 2));
+  const buffer = new ArrayBuffer(WAV_HEADER_BYTES + samples.length * 2);
   const view = new DataView(buffer);
   const writeText = (offset, text) => [...text].forEach((ch, i) => view.setUint8(offset + i, ch.charCodeAt(0)));
 
@@ -81,10 +87,12 @@ export function encodeWav(samples, sampleRate) {
 
   for (let i = 0; i < samples.length; i++) {
     let v = samples[i] * gain;
-    if (i < fade) v *= i / fade;
-    const fromEnd = samples.length - 1 - i;
-    if (fromEnd < fade) v *= fromEnd / fade;
-    view.setInt16(44 + i * 2, Math.round(Math.max(-1, Math.min(1, v)) * 32767), true);
+    if (fade > 0) {
+      if (i < fade) v *= i / fade;
+      const fromEnd = samples.length - 1 - i;
+      if (fromEnd < fade) v *= fromEnd / fade;
+    }
+    view.setInt16(WAV_HEADER_BYTES + i * 2, Math.round(Math.max(-1, Math.min(1, v)) * 32767), true);
   }
   return new Uint8Array(buffer);
 }

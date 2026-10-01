@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { encodeWav, findSoundBounds, mixToMono, peakOf } from '../src/renderer/dashboard/lib/wav.js';
+import { encodeWav, findSoundBounds, mixToMono, peakOf } from '../src/shared/wav.js';
 import { niceStep } from '../src/renderer/dashboard/components/day-chart.js';
 
 const RATE = 1000;

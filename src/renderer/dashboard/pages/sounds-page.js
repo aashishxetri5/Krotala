@@ -5,7 +5,7 @@
 
 import { CHAOS_PACK } from '../../../shared/catalog.js';
 import {
-  CHAOS_SOUND_ID, Invoke, PitchMode, Send, SOUND_CATEGORIES, ToastKind,
+  CHAOS_SOUND_ID, CUSTOM_CATEGORY, Invoke, PitchMode, Send, SOUND_CATEGORIES, ToastKind,
 } from '../../../shared/constants.js';
 import { SONGS } from '../../../shared/songs.js';
 import { api } from '../../shared/bridge.js';
@@ -98,7 +98,7 @@ export function mountSoundsPage(store, { packEditor, recorder }) {
         onPreview: () => api.send(Send.PREVIEW, { id: CHAOS_SOUND_ID }),
       }));
     }
-    if (filter === ALL || filter === 'Custom') {
+    if (filter === ALL || filter === CUSTOM_CATEGORY) {
       cards.push(actionCard('upload', 'Add your own', 'Audio files or a shared .kbpack', importSounds));
       cards.push(actionCard('mic', 'Record a sound', 'Use your microphone', () => recorder.open()));
     }
@@ -115,14 +115,22 @@ export function mountSoundsPage(store, { packEditor, recorder }) {
   bindChoiceGroup(store, $('#echo'), 'echo', ECHO_MODES);
   songSelect.addEventListener('change', () => store.saveSettings({ songId: songSelect.value }));
   $('#song-restart').addEventListener('click', async () => {
-    await api.invoke(Invoke.SONG_RESTART);
-    refreshSongProgress();
+    try {
+      await api.invoke(Invoke.SONG_RESTART);
+      refreshSongProgress();
+    } catch (err) {
+      showError("Couldn't restart the song", err);
+    }
   });
 
   const refreshSongProgress = async () => {
     if (store.state.settings?.pitchMode !== PitchMode.SONG) return;
-    const { index, length } = await api.invoke(Invoke.SONG_PROGRESS);
-    progress.textContent = `Note ${index + 1} of ${length}`;
+    try {
+      const { index, length } = await api.invoke(Invoke.SONG_PROGRESS);
+      progress.textContent = `Note ${index + 1} of ${length}`;
+    } catch {
+      progress.textContent = ''; // The position is a nicety; leave it blank if unavailable.
+    }
   };
 
   store.subscribe(['sounds'], ({ settings }) => {

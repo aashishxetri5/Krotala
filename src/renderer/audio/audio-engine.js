@@ -10,7 +10,7 @@
  */
 
 import {
-  CHAOS_SOUND_ID, Invoke, MUTE, PACK_DEFAULT, Send,
+  CHAOS_SOUND_ID, Invoke, Limits, MUTE, PACK_DEFAULT, Send,
 } from '../../shared/constants.js';
 import { api } from '../shared/bridge.js';
 import { Echo } from './echo.js';
@@ -59,6 +59,7 @@ const Sustain = Object.freeze({
   STOP_MARGIN_SECONDS: 0.02,
 });
 
+/** Decodes packs and plays, sustains and releases their samples through Web Audio. */
 export class AudioEngine {
   /**
    * @param {BaseAudioContext} context - Where to play (an OfflineAudioContext in tests).
@@ -88,6 +89,8 @@ export class AudioEngine {
     this.held = new Map();
     /** @type {WeakMap<AudioBuffer, { buffer: AudioBuffer, start: number, offset: number } | null>} */
     this.loops = new WeakMap();
+    /** @type {Map<string, number>} Bumped by forget() so decodes that were in flight are discarded. */
+    this.generations = new Map();
   }
 
   /**
@@ -106,26 +109,43 @@ export class AudioEngine {
    * @returns {Promise<void>}
    */
   async decodePack(id) {
+    const generation = this.generationOf(id);
     try {
       const data = await api.invoke(Invoke.SOUND_DATA, id);
       const special = {};
       for (const [key, bytes] of Object.entries(data.special)) special[key] = await this.decode(bytes);
-      this.ready.set(id, {
+      const decoded = {
         variants: await Promise.all(data.variants.map((b) => this.decode(b))),
         special,
         release: await Promise.all(data.release.map((b) => this.decode(b))),
-      });
+      };
+      // A pack changed or deleted while decoding is dropped; its next use reloads it.
+      if (generation === this.generationOf(id)) this.ready.set(id, decoded);
     } catch (err) {
-      api.send(Send.AUDIO_ERROR, { id, message: String(err?.message ?? err) });
+      if (generation === this.generationOf(id)) api.send(Send.AUDIO_ERROR, { id, message: String(err?.message ?? err) });
     }
   }
 
   /**
+   * @param {string} id - Pack id.
+   * @returns {number} How many times the pack has been forgotten.
+   */
+  generationOf(id) {
+    return this.generations.get(id) ?? 0;
+  }
+
+  /**
+   * Decodes an audio file, cutting very long files to MAX_SAMPLE_SECONDS.
    * @param {Uint8Array} bytes - Encoded audio file.
    * @returns {Promise<AudioBuffer>} Decoded audio.
    */
-  decode(bytes) {
-    return this.context.decodeAudioData(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+  async decode(bytes) {
+    const buffer = await this.context.decodeAudioData(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+    const maxLength = Math.round(Limits.MAX_SAMPLE_SECONDS * buffer.sampleRate);
+    if (buffer.length <= maxLength) return buffer;
+    const trimmed = this.context.createBuffer(buffer.numberOfChannels, maxLength, buffer.sampleRate);
+    for (let c = 0; c < buffer.numberOfChannels; c++) trimmed.copyToChannel(buffer.getChannelData(c).subarray(0, maxLength), c);
+    return trimmed;
   }
 
   /**
@@ -135,6 +155,7 @@ export class AudioEngine {
    */
   forget(ids) {
     for (const id of ids) {
+      this.generations.set(id, this.generationOf(id) + 1);
       this.loading.delete(id);
       this.ready.delete(id);
     }
@@ -194,7 +215,11 @@ export class AudioEngine {
   hold(voiceId, buffer, sample, { rate, gain }) {
     this.release(voiceId);
     const loopInfo = this.loopFor(buffer);
-    if (!loopInfo) return; // Too short or too percussive to sustain.
+    if (!loopInfo) {
+      // Too short or percussive to sustain: tell the main process so auto-repeat applies.
+      api.send(Send.SUSTAIN_UNAVAILABLE, { voice: voiceId });
+      return;
+    }
 
     const now = this.context.currentTime;
     const handOverAt = now + (loopInfo.start + loopInfo.offset) / rate;

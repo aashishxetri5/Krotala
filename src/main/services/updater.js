@@ -29,6 +29,7 @@ function initialStatus() {
  * @property {string | null} error - Short error message.
  */
 
+/** Checks for, downloads and installs updates, reporting progress as UpdateState. */
 export class Updater {
   /**
    * @param {(state: UpdateState) => void} onChange - Called whenever the state changes.

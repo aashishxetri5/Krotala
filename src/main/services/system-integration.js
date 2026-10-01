@@ -7,7 +7,7 @@ import { APP_NAME } from '../../shared/constants.js';
 import { IS_MAC } from '../constants.js';
 
 /** Command-line flag that starts the app straight into the tray. */
-export const HIDDEN_FLAG = '--hidden';
+const HIDDEN_FLAG = '--hidden';
 
 /**
  * Registers or removes the app as a login item.

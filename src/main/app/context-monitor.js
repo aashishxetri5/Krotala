@@ -5,7 +5,8 @@
 
 import { EventEmitter } from 'node:events';
 import { MAX_RECENT_APPS, Timing } from '../constants.js';
-import { appLabel, resolveAudioContext } from '../core/audio-context.js';
+import { appLabel } from '../../shared/names.js';
+import { resolveAudioContext } from '../core/audio-context.js';
 import { getForegroundApp, isForegroundSupported } from '../services/foreground.js';
 import { MicWatcher } from '../services/mic-watcher.js';
 
@@ -85,7 +86,6 @@ export class ContextMonitor extends EventEmitter {
       appLabel: appLabel(this.env.app),
       muteReason: this.muteReason,
       profileSoundId: this.profileSoundId,
-      micActive: this.env.micActive,
       recentApps: this.recentApps,
       features: { appDetection: isForegroundSupported(), micDetection: MicWatcher.isSupported() },
     };

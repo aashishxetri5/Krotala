@@ -15,6 +15,7 @@
  * @property {string[]} [release] - Key-up samples.
  * @property {boolean} [pitched] - Tonal sound that suits Melody and Song mode.
  * @property {boolean} [sustain] - Keeps sounding while its key is held (tonal sounds; not clicks or hits).
+ * @property {boolean} [digitKeys] - Variants 0–9 belong to the digit keys and 10 to numpad *.
  * @property {number} [baseNote] - MIDI note the samples are recorded at (default 60).
  * @property {string} [fx] - Default on-screen effect style.
  * @property {boolean} [builtIn] - True for packs shipped with the app.
@@ -86,7 +87,6 @@
  * @property {string} appLabel - `app` without the extension.
  * @property {string | null} muteReason - Why sounds are silent right now, or null.
  * @property {string} profileSoundId - Pack chosen by the active app profile, or ''.
- * @property {boolean} micActive
  * @property {string[]} recentApps - Recently focused executables, newest first.
  * @property {{ appDetection: boolean, micDetection: boolean }} features
  */

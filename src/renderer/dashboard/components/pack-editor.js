@@ -2,7 +2,9 @@
  * @file Dialog for editing a user pack: name, icon, sustain, samples, sharing and deletion.
  */
 
-import { CUSTOM_PACK_ICONS, Invoke, Send, ToastKind } from '../../../shared/constants.js';
+import {
+  CUSTOM_PACK_ICONS, Invoke, Limits, Send, ToastKind,
+} from '../../../shared/constants.js';
 import { api } from '../../shared/bridge.js';
 import { $, h } from '../../shared/dom.js';
 import { icon } from '../../shared/icons.js';
@@ -10,6 +12,7 @@ import { withBusy } from '../ui/busy.js';
 import { confirmDialog } from '../ui/confirm-dialog.js';
 import { showError, showToast } from '../ui/toast.js';
 
+/** The dialog for editing a user pack. */
 export class PackEditor {
   /**
    * @param {import('../store.js').Store} store - Dashboard store.
@@ -20,6 +23,7 @@ export class PackEditor {
     this.store = store;
     this.dialog = /** @type {HTMLDialogElement} */ ($('#pack-dialog'));
     this.nameInput = /** @type {HTMLInputElement} */ ($('#pack-name'));
+    this.nameInput.maxLength = Limits.PACK_NAME_LENGTH;
     this.sustainInput = /** @type {HTMLInputElement} */ ($('#pack-sustain'));
     this.iconPicker = $('#pack-icon');
     this.variantList = $('#pack-variants');

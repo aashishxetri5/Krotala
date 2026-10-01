@@ -3,6 +3,7 @@
  */
 
 import { MUTE } from '../../shared/constants.js';
+import { appLabel } from '../../shared/names.js';
 
 /**
  * @typedef {object} Environment
@@ -10,15 +11,6 @@ import { MUTE } from '../../shared/constants.js';
  * @property {boolean} micActive - Another app is using the microphone.
  * @property {boolean} fullscreen - The foreground app covers its whole display.
  */
-
-/**
- * Strips the `.exe` extension for display.
- * @param {string | null} exe - Executable name.
- * @returns {string} Display label.
- */
-export function appLabel(exe) {
-  return exe ? exe.replace(/\.exe$/i, '') : '';
-}
 
 /**
  * Decides whether sounds play right now and which profile pack applies.

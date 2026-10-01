@@ -16,7 +16,7 @@ const range = (prefix, count) => Array.from({ length: count }, (_, i) => `${pref
 /** @type {readonly import('./types.js').SoundPack[]} */
 export const BUILT_IN_SOUNDS = Object.freeze([
   {
-    id: 'dialpad', sustain: true, name: 'Dial Pad', icon: 'phone', category: 'Classic', fx: FxStyle.RIPPLE,
+    id: 'dialpad', sustain: true, digitKeys: true, name: 'Dial Pad', icon: 'phone', category: 'Classic', fx: FxStyle.RIPPLE,
     description: 'Phone keypad tones. Each digit plays its real tone.',
     variants: range('dialpad', 12),
   },

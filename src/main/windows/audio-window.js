@@ -3,8 +3,9 @@
  */
 
 import { Paths } from '../constants.js';
-import { createWindow, sendTo } from './window-factory.js';
+import { createWindow, sendTo, WindowRole } from './window-factory.js';
 
+/** Owns the hidden window that plays all audio. */
 export class AudioWindow {
   constructor() {
     /** @type {Electron.BrowserWindow | null} */
@@ -21,7 +22,7 @@ export class AudioWindow {
       show: false,
       // Audio must keep playing while every other window is hidden.
       webPreferences: { backgroundThrottling: false },
-    }, 'audio');
+    }, { label: 'audio', role: WindowRole.AUDIO });
     this.win.loadFile(Paths.AUDIO_HTML);
     this.win.webContents.on('render-process-gone', () => {
       if (this.closing) return;

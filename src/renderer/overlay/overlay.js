@@ -4,7 +4,7 @@
  * costs nothing.
  */
 
-import { BannerKind, Push } from '../../shared/constants.js';
+import { Push } from '../../shared/constants.js';
 import { api } from '../shared/bridge.js';
 import { $, h } from '../shared/dom.js';
 import { icon } from '../shared/icons.js';
@@ -20,6 +20,8 @@ const COMBO_PULSE_EVERY = 10;
 const BANNER_CENTER_Y = 0.4;
 /** Matches the moment the title lands in the slam-in animation. */
 const BURST_DELAY_MS = 220;
+/** Banners beyond this many waiting are dropped rather than shown late. */
+const MAX_QUEUED_BANNERS = 3;
 
 const canvas = /** @type {HTMLCanvasElement} */ ($('#fx'));
 const g = canvas.getContext('2d');
@@ -88,20 +90,30 @@ function showCombo({ count }) {
   comboTimer = window.setTimeout(() => combo.classList.remove('show'), COMBO_HIDE_MS);
 }
 
-/** @type {HTMLElement | null} */
-let activeBanner = null;
-let bannerTimer = 0;
+/** @type {import('../../shared/types.js').Banner[]} Banners waiting for the one on screen. */
+const bannerQueue = [];
+let bannerOnScreen = false;
+
+/**
+ * Shows a banner now, or after the ones already queued, so banners that arrive
+ * together (a combo milestone and an achievement) are each seen in turn.
+ * @param {import('../../shared/types.js').Banner} banner - Banner content.
+ * @returns {void}
+ */
+function queueBanner(banner) {
+  if (!bannerOnScreen) showBanner(banner);
+  else if (bannerQueue.length < MAX_QUEUED_BANNERS) bannerQueue.push(banner);
+}
 
 /**
  * Shows a full-screen banner with an edge flash, light rays, a slam-in title and a
- * particle burst. A new banner replaces the one on screen.
+ * particle burst, then moves on to the next queued banner.
  * @param {import('../../shared/types.js').Banner} banner - Banner content.
  * @returns {void}
  */
 function showBanner(banner) {
-  const theme = themeFor(banner, BannerKind.ACHIEVEMENT);
-  activeBanner?.remove();
-  clearTimeout(bannerTimer);
+  const theme = themeFor(banner);
+  bannerOnScreen = true;
 
   const element = h('div', { className: `banner banner-${banner.kind}` }, [
     h('div', { className: 'banner-flash' }),
@@ -118,10 +130,11 @@ function showBanner(banner) {
   element.style.setProperty('--intensity', String(theme.intensity));
   element.style.setProperty('--duration', `${theme.durationMs}ms`);
   document.body.append(element);
-  activeBanner = element;
-  bannerTimer = window.setTimeout(() => {
+  window.setTimeout(() => {
     element.remove();
-    if (activeBanner === element) activeBanner = null;
+    bannerOnScreen = false;
+    const next = bannerQueue.shift();
+    if (next) showBanner(next);
   }, theme.durationMs);
 
   // The burst goes off as the title lands.
@@ -139,4 +152,4 @@ api.on(Push.FX, (fx) => {
   ensureRunning();
 });
 api.on(Push.COMBO, showCombo);
-api.on(Push.BANNER, showBanner);
+api.on(Push.BANNER, queueBanner);

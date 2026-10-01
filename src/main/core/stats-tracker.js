@@ -60,7 +60,6 @@ const DAILY_FIELDS = ['days', 'characters', 'otherKeys', 'activeMs', 'activeChar
  * @property {number} bestWpm
  * @property {number} bestCombo
  * @property {number} streak
- * @property {number} songNotes
  * @property {{ day: string, count: number }[]} days
  * @property {Record<string, number>} keys
  * @property {UnlockedAchievement[]} achievements
@@ -95,7 +94,7 @@ export const dayKey = (ms) => new Date(ms).toLocaleDateString('en-CA');
  * @param {number} ms - Duration in milliseconds.
  * @returns {number} Rounded WPM.
  */
-export const toWpm = (chars, ms) => Math.round(chars / Wpm.CHARS_PER_WORD / (ms / MINUTE_MS));
+const toWpm = (chars, ms) => Math.round(chars / Wpm.CHARS_PER_WORD / (ms / MINUTE_MS));
 
 /**
  * @param {Record<string, number>} map - Counter map.
@@ -114,6 +113,7 @@ const increment = (map, key, amount = 1) => {
  */
 const toPublic = (a, unlockedAt) => ({ id: a.id, icon: a.icon, name: a.name, description: a.description, unlockedAt });
 
+/** Counts keys, characters, speed, combos and streaks, and unlocks achievements. */
 export class StatsTracker {
   /**
    * @param {Partial<StatsData>} [data] - Previously saved statistics.
@@ -256,7 +256,6 @@ export class StatsTracker {
       bestWpm: this.data.bestWpm,
       bestCombo: this.data.bestCombo,
       streak: this.streak(),
-      songNotes: this.data.songNotes,
       days: this.lastDays(Stats.CHART_DAYS),
       keys: this.data.keys,
       achievements: ACHIEVEMENTS.map((a) => toPublic(a, this.data.achievements[a.id] || null)),
@@ -305,7 +304,7 @@ export class StatsTracker {
     }
     this.recentCharacters.push(t);
     while (t - this.recentCharacters[0] > Wpm.WINDOW_MS) this.recentCharacters.shift();
-    if (this.recentCharacters.length >= Wpm.MIN_KEYS_FOR_BEST) {
+    if (this.recentCharacters.length >= Wpm.MIN_CHARS_FOR_BEST) {
       this.data.bestWpm = Math.max(this.data.bestWpm, Math.min(this.windowWpm(), Wpm.MAX_TYPING_WPM));
     }
   }

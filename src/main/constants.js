@@ -45,6 +45,7 @@ export const DashboardWindowSize = Object.freeze({
   HEIGHT: 820,
   MIN_WIDTH: 780,
   MIN_HEIGHT: 580,
+  /** Shown before the page paints; matches --bg in src/renderer/shared/tokens.css. */
   BACKGROUND: '#101018',
 });
 
@@ -70,8 +71,8 @@ export const Combo = Object.freeze({
 
 export const Wpm = Object.freeze({
   WINDOW_MS: StatsRules.SPEED_WINDOW_MS,
-  /** Minimum keys in the window before a best score is recorded. */
-  MIN_KEYS_FOR_BEST: 25,
+  /** Minimum characters in the window before a best score is recorded. */
+  MIN_CHARS_FOR_BEST: 25,
   MAX_TYPING_WPM: StatsRules.MAX_TYPING_WPM,
   /** Number of recent characters whose rate decides whether the user is mashing keys. */
   MASH_SAMPLE_CHARS: 5,
@@ -99,3 +100,6 @@ export const Playback = Object.freeze({
 });
 
 export const MAX_RECENT_APPS = 12;
+
+/** Toasts kept for the dashboard while it is hidden; older ones are dropped. */
+export const MAX_QUEUED_DASHBOARD_MESSAGES = 5;

@@ -44,6 +44,7 @@ export function mountStatsPage(store, isVisible) {
       $(selector).textContent = stats[key] == null ? NO_DATA : formatNumber(stats[key]);
     }
     $('#st-breakdown').textContent = describeBreakdown(stats);
+    $('#day-chart-range').textContent = `Last ${stats.days.length} days`;
     renderDayChart($('#day-chart'), $('#day-table'), stats.days);
     renderKeyHeatmap($('#heatmap'), stats.keys);
     renderAchievements($('#achievements'), $('#achievement-count'), stats.achievements);

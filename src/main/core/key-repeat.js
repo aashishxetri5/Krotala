@@ -5,6 +5,7 @@
 
 import { Input } from '../constants.js';
 
+/** Flags auto-repeat key presses and recovers when a key-up event was lost. */
 export class KeyRepeatFilter {
   constructor() {
     /** @type {Map<number, number>} Key code → time of its latest keydown while held. */

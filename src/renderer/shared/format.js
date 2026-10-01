@@ -39,9 +39,3 @@ export const formatLongDay = (day) => parseDay(day).toLocaleDateString(undefined
  * @returns {string} Localized date and time.
  */
 export const formatDateTime = (ms) => new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-
-/**
- * @param {string} exe - Executable name.
- * @returns {string} Name without `.exe`.
- */
-export const formatAppName = (exe) => exe.replace(/\.exe$/i, '');

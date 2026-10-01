@@ -5,7 +5,7 @@
 import { Invoke, MUTE, ToastKind } from '../../../shared/constants.js';
 import { api } from '../../shared/bridge.js';
 import { $, h, setOptions } from '../../shared/dom.js';
-import { formatAppName } from '../../shared/format.js';
+import { appLabel, soundName } from '../../../shared/names.js';
 import { icon } from '../../shared/icons.js';
 import { soundOptions } from '../components/controls.js';
 import { showError, showToast } from '../ui/toast.js';
@@ -34,7 +34,7 @@ export function mountAppsPage(store) {
     saveProfiles(previous.filter((_, i) => i !== index));
     showToast({
       kind: ToastKind.INFO,
-      title: `Removed ${formatAppName(removed.app)}`,
+      title: `Removed ${appLabel(removed.app)}`,
       action: { label: 'Undo', onClick: () => saveProfiles(previous) },
     });
   };
@@ -55,9 +55,9 @@ export function mountAppsPage(store) {
     } else if (runtime.muteReason && settings.enabled) {
       status.textContent = `${runtime.muteReason}.`;
     } else if (runtime.app) {
-      const profile = store.state.sounds.find((s) => s.id === runtime.profileSoundId);
-      status.textContent = profile
-        ? `You're in ${runtime.appLabel}. Playing ${profile.name} from its profile.`
+      const profileSound = runtime.profileSoundId ? soundName(runtime.profileSoundId, store.state.sounds) : '';
+      status.textContent = profileSound
+        ? `You're in ${runtime.appLabel}. Playing ${profileSound} from its profile.`
         : `You're in ${runtime.appLabel}. Using your main sound.`;
     } else {
       status.textContent = 'Switch to another app to see it here.';
@@ -73,19 +73,19 @@ export function mountAppsPage(store) {
     } else {
       const options = soundOptions(sounds, { leading: [{ value: MUTE, label: 'Mute' }], chaos: true });
       list.replaceChildren(...settings.profiles.map((profile, index) => {
-        const select = /** @type {HTMLSelectElement} */ (h('select', { attrs: { 'aria-label': `Sound for ${formatAppName(profile.app)}` } }));
+        const select = /** @type {HTMLSelectElement} */ (h('select', { attrs: { 'aria-label': `Sound for ${appLabel(profile.app)}` } }));
         setOptions(select, options, profile.soundId);
         select.addEventListener('change', () => saveProfiles(profiles().map((p, i) => (i === index ? { ...p, soundId: select.value } : p))));
         const isActive = runtime?.app?.toLowerCase() === profile.app.toLowerCase();
         return h('div', { className: 'profile-row' }, [
           h('span', { className: 'profile-name', attrs: { title: profile.app } }, [
-            formatAppName(profile.app),
+            appLabel(profile.app),
             isActive ? h('span', { className: 'profile-active', text: 'Active' }) : null,
           ]),
           select,
           h('button', {
             className: 'icon-button small',
-            attrs: { type: 'button', 'aria-label': `Remove ${formatAppName(profile.app)}` },
+            attrs: { type: 'button', 'aria-label': `Remove ${appLabel(profile.app)}` },
             dataset: { tip: 'Remove' },
             on: { click: () => removeProfile(index) },
           }, icon('trash', { size: 16 })),
@@ -96,7 +96,7 @@ export function mountAppsPage(store) {
     const taken = new Set(settings.profiles.map((p) => p.app.toLowerCase()));
     const candidates = (runtime?.recentApps ?? []).filter((app) => !taken.has(app.toLowerCase()));
     setOptions(picker, candidates.length
-      ? candidates.map((app) => ({ value: app, label: formatAppName(app) }))
+      ? candidates.map((app) => ({ value: app, label: appLabel(app) }))
       : [{ value: '', label: 'Switch to an app to list it here' }], candidates[0] ?? '');
     const supported = Boolean(runtime?.features.appDetection);
     picker.disabled = !supported || !candidates.length;

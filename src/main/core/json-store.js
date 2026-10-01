@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+/** Persists one JSON file, coalescing bursts of changes and writing atomically. */
 export class JsonStore {
   /**
    * @param {string} file - Absolute path of the JSON file.

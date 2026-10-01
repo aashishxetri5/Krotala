@@ -1,11 +1,12 @@
 /**
  * @file Preload bridge shared by every window. Exposes `window.api` with access
- * limited to the IPC channels the main process passes in through process arguments
- * (see src/main/windows/window-factory.js).
+ * limited to the IPC channels of the window's role, which the main process passes in
+ * through process arguments (see WindowRole in src/main/windows/window-factory.js).
  */
 
 const { contextBridge, ipcRenderer } = require('electron');
 
+/** Must match IPC_ARGUMENT in src/main/windows/window-factory.js. */
 const IPC_ARGUMENT = '--ipc-channels=';
 const encoded = process.argv.find((arg) => arg.startsWith(IPC_ARGUMENT))?.slice(IPC_ARGUMENT.length);
 const allowed = encoded ? JSON.parse(atob(encoded)) : { invoke: [], send: [], listen: [] };

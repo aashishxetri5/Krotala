@@ -6,7 +6,7 @@
 import { screen } from 'electron';
 import { Push } from '../../shared/constants.js';
 import { Paths } from '../constants.js';
-import { createWindow, sendTo } from './window-factory.js';
+import { createWindow, sendTo, WindowRole } from './window-factory.js';
 
 const DISPLAY_EVENTS = ['display-added', 'display-removed', 'display-metrics-changed'];
 
@@ -17,6 +17,7 @@ const DISPLAY_EVENTS = ['display-added', 'display-removed', 'display-metrics-cha
  */
 const sameBounds = (a, b) => a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
 
+/** Keeps one click-through effects window per display and routes effects to them. */
 export class OverlayManager {
   constructor() {
     /** @type {Map<number, { win: Electron.BrowserWindow, bounds: Electron.Rectangle }>} */
@@ -115,7 +116,7 @@ export class OverlayManager {
       alwaysOnTop: true,
       show: false,
       webPreferences: { backgroundThrottling: false },
-    }, 'overlay');
+    }, { label: 'overlay', role: WindowRole.OVERLAY });
     win.setIgnoreMouseEvents(true);
     win.setAlwaysOnTop(true, 'screen-saver');
     win.setVisibleOnAllWorkspaces?.(true, { visibleOnFullScreen: true });

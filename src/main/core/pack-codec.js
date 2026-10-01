@@ -6,9 +6,10 @@
 import {
   AUDIO_EXTENSIONS, CUSTOM_PACK_ICONS, DEFAULT_CUSTOM_ICON, Limits, PACK_SPECIAL_KEYS,
 } from '../../shared/constants.js';
+import { formatMegabytes } from '../../shared/names.js';
 
 export const PACK_FORMAT = 'keyboard-sounds-pack';
-export const PACK_VERSION = 1;
+const PACK_VERSION = 1;
 
 const FILE_NAME = /^[\w-]{1,48}\.([a-z0-9]{2,5})$/;
 const DEFAULT_PACK_NAME = 'Imported pack';
@@ -102,7 +103,7 @@ export async function encodePack(pack, readFile) {
  * @throws {PackError} When the file is not a valid pack.
  */
 export function decodePack(buffer) {
-  if (buffer.length > Limits.MAX_PACK_BYTES) throw new PackError('The pack is larger than 30 MB.');
+  if (buffer.length > Limits.MAX_PACK_BYTES) throw new PackError(`The pack is larger than ${formatMegabytes(Limits.MAX_PACK_BYTES)}.`);
   let pack;
   try {
     pack = JSON.parse(buffer.toString('utf8'));
