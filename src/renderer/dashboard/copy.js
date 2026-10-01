@@ -2,7 +2,9 @@
  * @file User-facing labels and descriptions for the dashboard.
  */
 
-import { FxPosition, FxStyle, PitchMode, StatsRules, UpdateStatus } from '../../shared/constants.js';
+import {
+  EchoMode, FxPosition, FxStyle, PitchMode, StatsRules, UpdateStatus,
+} from '../../shared/constants.js';
 
 /**
  * @param {number} ms - Duration.
@@ -37,6 +39,12 @@ export const PITCH_MODES = Object.freeze([
   { value: PitchMode.WOBBLE, label: 'Wobble', hint: 'A slight random detune on each press, so repeated keys sound less mechanical.' },
   { value: PitchMode.MELODY, label: 'Melody', hint: 'Each key is a note on a pentatonic scale. Works best with Piano, Harmonium or Marimba.' },
   { value: PitchMode.SONG, label: 'Song', hint: 'Every key press plays the next note of the chosen song.' },
+]);
+
+export const ECHO_MODES = Object.freeze([
+  { value: EchoMode.OFF, label: 'Off' },
+  { value: EchoMode.SHORT, label: 'Short' },
+  { value: EchoMode.LONG, label: 'Long' },
 ]);
 
 export const FX_STYLES = Object.freeze([

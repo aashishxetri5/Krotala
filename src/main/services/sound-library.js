@@ -76,6 +76,7 @@ export class SoundLibrary {
       description: '',
       special: {},
       release: [],
+      sustain: true,
       ...rest,
       icon: cleanIcon(rest.icon),
       variants: rest.variants?.length ? rest.variants : [file].filter(Boolean),
@@ -118,10 +119,11 @@ export class SoundLibrary {
    * @param {string[]} fields.variants
    * @param {Record<string, string>} [fields.special]
    * @param {string[]} [fields.release]
+   * @param {boolean} [fields.sustain] - Keep sounding while a key is held.
    * @returns {SoundPack} New pack with a fresh id.
    */
-  createPack({ name, icon = DEFAULT_CUSTOM_ICON, description = '', variants, special = {}, release = [] }) {
-    return { id: `custom:${randomHex()}`, name, icon, description, category: CUSTOM_CATEGORY, variants, special, release };
+  createPack({ name, icon = DEFAULT_CUSTOM_ICON, description = '', variants, special = {}, release = [], sustain = true }) {
+    return { id: `custom:${randomHex()}`, name, icon, description, category: CUSTOM_CATEGORY, variants, special, release, sustain };
   }
 
   /**
@@ -164,6 +166,7 @@ export class SoundLibrary {
       name: decoded.name,
       icon: decoded.icon,
       description: decoded.description,
+      sustain: decoded.sustain,
       variants: decoded.variants.map((n) => stored[n]),
       special: Object.fromEntries(Object.entries(decoded.special).map(([key, n]) => [key, stored[n]])),
       release: decoded.release.map((n) => stored[n]),

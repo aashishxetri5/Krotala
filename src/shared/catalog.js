@@ -16,7 +16,7 @@ const range = (prefix, count) => Array.from({ length: count }, (_, i) => `${pref
 /** @type {readonly import('./types.js').SoundPack[]} */
 export const BUILT_IN_SOUNDS = Object.freeze([
   {
-    id: 'dialpad', name: 'Dial Pad', icon: 'phone', category: 'Classic', fx: FxStyle.RIPPLE,
+    id: 'dialpad', sustain: true, name: 'Dial Pad', icon: 'phone', category: 'Classic', fx: FxStyle.RIPPLE,
     description: 'Phone keypad tones. Each digit plays its real tone.',
     variants: range('dialpad', 12),
   },
@@ -34,17 +34,17 @@ export const BUILT_IN_SOUNDS = Object.freeze([
     special: { Enter: 'typewriter_bell.wav' },
   },
   {
-    id: 'piano', name: 'Piano', icon: 'piano', category: 'Musical', pitched: true, baseNote: 60, fx: FxStyle.NOTES,
+    id: 'piano', sustain: true, name: 'Piano', icon: 'piano', category: 'Musical', pitched: true, baseNote: 60, fx: FxStyle.NOTES,
     description: 'Bright acoustic piano. Try it with Song mode.',
     variants: ['piano.wav'],
   },
   {
-    id: 'harmonium', name: 'Harmonium', icon: 'keyboard-music', category: 'Musical', pitched: true, baseNote: 60, fx: FxStyle.NOTES,
+    id: 'harmonium', sustain: true, name: 'Harmonium', icon: 'keyboard-music', category: 'Musical', pitched: true, baseNote: 60, fx: FxStyle.NOTES,
     description: 'Reedy bellows organ.',
     variants: ['harmonium.wav'],
   },
   {
-    id: 'marimba', name: 'Marimba', icon: 'music-4', category: 'Musical', pitched: true, baseNote: 72, fx: FxStyle.NOTES,
+    id: 'marimba', sustain: true, name: 'Marimba', icon: 'music-4', category: 'Musical', pitched: true, baseNote: 72, fx: FxStyle.NOTES,
     description: 'Warm wooden mallet tones.',
     variants: ['marimba.wav'],
   },
@@ -55,7 +55,7 @@ export const BUILT_IN_SOUNDS = Object.freeze([
     special: { Space: 'drum_kick.wav', Enter: 'drum_crash.wav' },
   },
   {
-    id: 'pewpew', name: 'Pew Pew', icon: 'zap', category: 'Action', fx: FxStyle.LASER,
+    id: 'pewpew', sustain: true, name: 'Pew Pew', icon: 'zap', category: 'Action', fx: FxStyle.LASER,
     description: 'Sci-fi laser blasts.',
     variants: range('pewpew', 3),
   },
@@ -66,32 +66,32 @@ export const BUILT_IN_SOUNDS = Object.freeze([
     special: { Enter: 'shotgun_pump.wav' },
   },
   {
-    id: 'swoosh', name: 'Ninja Swoosh', icon: 'swords', category: 'Action', fx: FxStyle.SLASH,
+    id: 'swoosh', sustain: true, name: 'Ninja Swoosh', icon: 'swords', category: 'Action', fx: FxStyle.SLASH,
     description: 'Fast blade swipes.',
     variants: range('swoosh', 3),
   },
   {
-    id: 'coin', name: 'Retro Coin', icon: 'coins', category: 'Retro', baseNote: 83, fx: FxStyle.ICON,
+    id: 'coin', sustain: true, name: 'Retro Coin', icon: 'coins', category: 'Retro', baseNote: 83, fx: FxStyle.ICON,
     description: '8-bit coin pickup.',
     variants: ['coin.wav'],
   },
   {
-    id: 'jump', name: '8-bit Jump', icon: 'gamepad-2', category: 'Retro', fx: FxStyle.ICON,
+    id: 'jump', sustain: true, name: '8-bit Jump', icon: 'gamepad-2', category: 'Retro', fx: FxStyle.ICON,
     description: 'Platformer jump sounds.',
     variants: range('jump', 2),
   },
   {
-    id: 'bubble', name: 'Bubble Pop', icon: 'droplets', category: 'Funny', fx: FxStyle.BUBBLES,
+    id: 'bubble', sustain: true, name: 'Bubble Pop', icon: 'droplets', category: 'Funny', fx: FxStyle.BUBBLES,
     description: 'Short, satisfying bloops.',
     variants: range('bubble', 3),
   },
   {
-    id: 'boing', name: 'Boing', icon: 'activity', category: 'Funny', baseNote: 57, fx: FxStyle.ICON,
+    id: 'boing', sustain: true, name: 'Boing', icon: 'activity', category: 'Funny', baseNote: 57, fx: FxStyle.ICON,
     description: 'Cartoon spring.',
     variants: ['boing.wav'],
   },
   {
-    id: 'squeak', name: 'Squeaky Toy', icon: 'bird', category: 'Funny', fx: FxStyle.ICON,
+    id: 'squeak', sustain: true, name: 'Squeaky Toy', icon: 'bird', category: 'Funny', fx: FxStyle.ICON,
     description: 'Rubber duck squeaks.',
     variants: range('squeak', 3),
   },

@@ -14,6 +14,7 @@
  * @property {Record<string, string>} [special] - Key name → sample that replaces the variant for that key.
  * @property {string[]} [release] - Key-up samples.
  * @property {boolean} [pitched] - Tonal sound that suits Melody and Song mode.
+ * @property {boolean} [sustain] - Keeps sounding while its key is held (tonal sounds; not clicks or hits).
  * @property {number} [baseNote] - MIDI note the samples are recorded at (default 60).
  * @property {string} [fx] - Default on-screen effect style.
  * @property {boolean} [builtIn] - True for packs shipped with the app.
@@ -33,6 +34,8 @@
  * @property {number} rate - Playback rate (pitch); 1 is natural.
  * @property {number} pan - Stereo position from -1 (left) to 1 (right).
  * @property {number} gain - Linear gain applied before the master volume.
+ * @property {boolean} [sustain] - Keep sounding until a matching RELEASE arrives.
+ * @property {string} [voice] - Identifies a sustained sound (the key name) for its RELEASE.
  */
 
 /**
@@ -56,6 +59,8 @@
  * @property {string} pitchMode - One of PitchMode.
  * @property {string} songId
  * @property {boolean} stereo
+ * @property {boolean} sustain - Tonal packs keep sounding while a key is held.
+ * @property {string} echo - One of EchoMode.
  * @property {boolean} playOnRepeat
  * @property {boolean} mouseClicks
  * @property {string} keyUpSound - '' (off), PACK_DEFAULT or a pack id.

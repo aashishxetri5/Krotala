@@ -4,7 +4,7 @@
  */
 
 import {
-  FxPosition, FxStyle, Limits, OVERRIDE_KEYS, PitchMode,
+  EchoMode, FxPosition, FxStyle, Limits, OVERRIDE_KEYS, PitchMode,
 } from '../../shared/constants.js';
 
 /** @type {Readonly<import('../../shared/types.js').Settings>} */
@@ -15,6 +15,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   pitchMode: PitchMode.OFF,
   songId: 'fur-elise',
   stereo: true,
+  sustain: true,
+  echo: EchoMode.OFF,
   playOnRepeat: false,
   mouseClicks: false,
   keyUpSound: '',
@@ -50,6 +52,8 @@ const USER_SETTABLE = Object.freeze({
   pitchMode: isOneOf(PitchMode),
   songId: isId,
   stereo: isBoolean,
+  sustain: isBoolean,
+  echo: isOneOf(EchoMode),
   playOnRepeat: isBoolean,
   mouseClicks: isBoolean,
   keyUpSound: isId,

@@ -112,6 +112,14 @@ test('key release sounds', () => {
   assert.ok(borrowed.gain < 1);
 });
 
+test('tonal packs sustain while held when the setting is on', () => {
+  const m = mapper();
+  assert.equal(m.resolve({ ...BASE, sustain: true, soundId: 'piano' }, 'A').sustain, true);
+  assert.equal(m.resolve({ ...BASE, sustain: true, soundId: 'mechanical' }, 'A').sustain, false, 'clicks never sustain');
+  assert.equal(m.resolve({ ...BASE, sustain: false, soundId: 'piano' }, 'A').sustain, false);
+  assert.equal(m.resolve({ ...BASE, sustain: true, soundId: 'piano' }, 'Mouse1').sustain, false, 'mouse clicks have no release');
+});
+
 test('preview picks the requested variant', () => {
   assert.deepEqual(mapper().preview('mechanical', 2).slot, { type: 'variant', index: 2 });
   assert.equal(mapper().preview('missing'), null);

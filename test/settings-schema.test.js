@@ -4,6 +4,8 @@ import { DEFAULT_SETTINGS, migrateSettings, sanitizePatch } from '../src/main/se
 
 test('valid user changes are accepted', () => {
   assert.deepEqual(sanitizePatch({ volume: 0.4, enabled: false, pitchMode: 'song' }), { volume: 0.4, enabled: false, pitchMode: 'song' });
+  assert.deepEqual(sanitizePatch({ sustain: false, echo: 'long' }), { sustain: false, echo: 'long' });
+  assert.deepEqual(sanitizePatch({ echo: 'cathedral' }), {});
 });
 
 test('invalid values and main-process-only keys are dropped', () => {

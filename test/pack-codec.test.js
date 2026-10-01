@@ -26,6 +26,13 @@ test('a pack survives export and import', async () => {
   assert.equal(Object.keys(decoded.files).length, 2, 'shared files are stored once');
   assert.deepEqual(decoded.files[decoded.variants[0]], FILES['a1.wav']);
   assert.equal(decoded.special.Enter, decoded.variants[1]);
+  assert.equal(decoded.sustain, true);
+});
+
+test('the sustain choice travels with a shared pack', async () => {
+  const decoded = decodePack(await encodePack({ ...PACK, sustain: false }, async (f) => FILES[f]));
+  assert.equal(decoded.sustain, false);
+  assert.equal(decodePack(bytes(validPack())).sustain, true, 'packs without the field sustain');
 });
 
 test('files that are not packs are rejected', () => {

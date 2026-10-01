@@ -130,9 +130,9 @@ export class PackManager extends EventEmitter {
   }
 
   /**
-   * Renames a pack or changes its icon.
+   * Renames a pack, changes its icon, or turns sustain on or off.
    * @param {string} id - Pack id.
-   * @param {{ name?: string, icon?: string }} patch - Untrusted changes.
+   * @param {{ name?: string, icon?: string, sustain?: boolean }} patch - Untrusted changes.
    * @returns {SoundPack | null} Updated pack, or null when not found.
    */
   update(id, patch) {
@@ -142,6 +142,7 @@ export class PackManager extends EventEmitter {
       ...pack,
       name: cleanText(patch.name, Limits.PACK_NAME_LENGTH) || pack.name,
       icon: CUSTOM_PACK_ICONS.includes(patch.icon) ? patch.icon : pack.icon,
+      sustain: typeof patch.sustain === 'boolean' ? patch.sustain : pack.sustain,
     }, { samplesChanged: false });
   }
 

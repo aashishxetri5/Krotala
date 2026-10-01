@@ -21,6 +21,7 @@ export class PackError extends Error {}
  * @property {string} name
  * @property {string} icon
  * @property {string} description
+ * @property {boolean} sustain
  * @property {Record<string, Buffer>} files - File name inside the pack → bytes.
  * @property {string[]} variants
  * @property {Record<string, string>} special
@@ -86,6 +87,7 @@ export async function encodePack(pack, readFile) {
     name: pack.name,
     icon: pack.icon,
     description: pack.description || '',
+    sustain: pack.sustain !== false,
     variants,
     special,
     release,
@@ -136,6 +138,7 @@ export function decodePack(buffer) {
     name: cleanText(pack.name, Limits.PACK_NAME_LENGTH) || DEFAULT_PACK_NAME,
     icon: cleanIcon(pack.icon),
     description: cleanText(pack.description, Limits.PACK_DESCRIPTION_LENGTH),
+    sustain: pack.sustain !== false,
     files,
     variants,
     special,

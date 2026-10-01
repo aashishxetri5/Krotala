@@ -29,6 +29,8 @@ export class PlaybackController {
    */
   constructor({ settings, mapper, context, stats, audio, overlay, notifier }) {
     Object.assign(this, { settings, mapper, context, stats, audio, overlay, notifier });
+    /** @type {Set<string>} Keys whose sound is sustaining until they are released. */
+    this.held = new Set();
   }
 
   /**
@@ -38,9 +40,15 @@ export class PlaybackController {
    */
   onKeyDown({ key, isRepeat }) {
     const s = this.settings.get();
-    if (!isRepeat) this.recordKeystroke(key, s);
-    if (this.context.muteReason || (isRepeat && !s.playOnRepeat)) return;
-    this.play(key);
+    // The main switch turns everything off: sounds, effects, combos and stats.
+    if (!s.enabled) return;
+    if (isRepeat) {
+      // A sustaining key is already sounding; other keys replay only if asked to.
+      if (!this.held.has(key) && s.playOnRepeat && !this.context.muteReason) this.play(key);
+      return;
+    }
+    this.recordKeystroke(key, s);
+    if (!this.context.muteReason) this.play(key);
   }
 
   /**
@@ -49,6 +57,8 @@ export class PlaybackController {
    * @returns {void}
    */
   onKeyUp({ key }) {
+    // Always release, even when muted meanwhile, so no sound is left hanging.
+    if (this.held.delete(key)) this.audio.send(Push.RELEASE, { voice: key });
     if (this.context.muteReason) return;
     const command = this.mapper.resolveRelease(this.settings.get(), key, { profileSoundId: this.context.profileSoundId });
     if (command) this.audio.send(Push.PLAY, command);
@@ -76,16 +86,19 @@ export class PlaybackController {
   }
 
   /**
-   * Announces newly unlocked achievements.
+   * Announces newly unlocked achievements. While muted (main switch off, a call, a
+   * muted app…) they are only listed quietly in the dashboard.
    * @param {import('../core/stats-tracker.js').UnlockedAchievement[]} achievements - Unlocked achievements.
    * @returns {void}
    */
   celebrate(achievements) {
+    const quiet = Boolean(this.context.muteReason);
     for (const a of achievements) {
-      if (!this.context.muteReason) this.audio.send(Push.PLAY, uiSound(UiSound.ACHIEVEMENT));
+      this.notifier.toast({ kind: ToastKind.ACHIEVEMENT, title: `Achievement unlocked: ${a.name}`, message: a.description });
+      if (quiet) continue;
+      this.audio.send(Push.PLAY, uiSound(UiSound.ACHIEVEMENT));
       if (this.settings.get().fxEnabled) this.overlay.banner({ kind: BannerKind.ACHIEVEMENT, kicker: 'Achievement unlocked', title: a.name, subtitle: a.description, icon: a.icon, tier: 0 });
       else this.notifier.system(`Achievement unlocked: ${a.name}`, a.description);
-      this.notifier.toast({ kind: ToastKind.ACHIEVEMENT, title: `Achievement unlocked: ${a.name}`, message: a.description });
     }
   }
 
@@ -97,8 +110,9 @@ export class PlaybackController {
    */
   recordKeystroke(key, s) {
     const result = this.stats.update((t) => t.record(key, { printable: isPrintable(key) }));
-    if (s.fxEnabled && s.comboEnabled && result.combo >= Combo.COUNTER_MIN) this.overlay.combo(result.combo);
-    if (result.milestone && s.comboEnabled && !this.context.muteReason) this.celebrateCombo(result.milestone);
+    const showCombo = s.comboEnabled && !this.context.muteReason;
+    if (showCombo && s.fxEnabled && result.combo >= Combo.COUNTER_MIN) this.overlay.combo(result.combo);
+    if (showCombo && result.milestone) this.celebrateCombo(result.milestone);
     this.celebrate(result.achievements);
   }
 
@@ -131,7 +145,8 @@ export class PlaybackController {
     const playback = this.mapper.resolve(s, key, { profileSoundId: this.context.profileSoundId, pan });
     if (!playback) return;
     const { songNote, fx, icon, ...command } = playback;
-    this.audio.send(Push.PLAY, command);
+    if (command.sustain) this.held.add(key);
+    this.audio.send(Push.PLAY, command.sustain ? { ...command, voice: key } : command);
     if (songNote) this.stats.update((t) => t.noteSongNote());
     if (!s.fxEnabled) return;
 

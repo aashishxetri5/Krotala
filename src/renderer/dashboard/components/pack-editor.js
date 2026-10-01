@@ -1,5 +1,5 @@
 /**
- * @file Dialog for editing a user pack: name, icon, samples, sharing and deletion.
+ * @file Dialog for editing a user pack: name, icon, sustain, samples, sharing and deletion.
  */
 
 import { CUSTOM_PACK_ICONS, Invoke, Send, ToastKind } from '../../../shared/constants.js';
@@ -20,6 +20,7 @@ export class PackEditor {
     this.store = store;
     this.dialog = /** @type {HTMLDialogElement} */ ($('#pack-dialog'));
     this.nameInput = /** @type {HTMLInputElement} */ ($('#pack-name'));
+    this.sustainInput = /** @type {HTMLInputElement} */ ($('#pack-sustain'));
     this.iconPicker = $('#pack-icon');
     this.variantList = $('#pack-variants');
     /** @type {string | null} */
@@ -34,6 +35,7 @@ export class PackEditor {
     this.iconPicker.replaceChildren(...this.iconButtons);
 
     this.nameInput.addEventListener('change', () => this.update({ name: this.nameInput.value }));
+    this.sustainInput.addEventListener('change', () => this.update({ sustain: this.sustainInput.checked }));
     this.nameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.nameInput.blur(); });
     $('[data-close]', this.dialog).addEventListener('click', () => this.dialog.close());
     $('#pack-add-files').addEventListener('click', (e) => this.addFiles(/** @type {HTMLElement} */ (e.currentTarget)));
@@ -72,6 +74,7 @@ export class PackEditor {
       return;
     }
     if (document.activeElement !== this.nameInput) this.nameInput.value = pack.name;
+    this.sustainInput.checked = pack.sustain !== false;
     for (const button of this.iconButtons) button.setAttribute('aria-checked', String(button.dataset.icon === pack.icon));
 
     const canRemove = pack.variants.length > 1;
@@ -93,7 +96,7 @@ export class PackEditor {
   }
 
   /**
-   * @param {{ name?: string, icon?: string }} patch - Changes.
+   * @param {{ name?: string, icon?: string, sustain?: boolean }} patch - Changes.
    * @returns {Promise<void>}
    */
   async update(patch) {

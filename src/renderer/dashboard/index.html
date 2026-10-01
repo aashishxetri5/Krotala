@@ -62,11 +62,19 @@
             </div>
           </div>
           <div class="panel">
-            <h3>Space</h3>
+            <h3>Feel</h3>
+            <label class="row">
+              <span class="row-text">Sustain while held<small>Tonal packs keep sounding while you hold a key, then fade out when you let go.</small></span>
+              <input type="checkbox" class="switch" data-setting="sustain">
+            </label>
             <label class="row">
               <span class="row-text">3D stereo<small>Keys on the left play in your left ear, keys on the right in your right.</small></span>
               <input type="checkbox" class="switch" data-setting="stereo">
             </label>
+            <div class="row static">
+              <span class="row-text">Echo<small>Each sound trails off in fading repeats.</small></span>
+              <div class="segmented compact" id="echo" role="radiogroup" aria-label="Echo"></div>
+            </div>
             <h3>Try it</h3>
             <label class="visually-hidden" for="playground">Test area</label>
             <textarea id="playground" rows="3" placeholder="Type here to try your sound. It works in every app."></textarea>
@@ -96,7 +104,7 @@
             <p class="hint">“Pack default” uses the pack’s own release click. Mechanical has one.</p>
             <h3>Behavior</h3>
             <label class="row">
-              <span class="row-text">Repeat while a key is held<small>Plays on every auto-repeat, for example when holding Backspace.</small></span>
+              <span class="row-text">Repeat while a key is held<small>For packs that don't sustain, plays again on every auto-repeat, for example when holding Backspace.</small></span>
               <input type="checkbox" class="switch" data-setting="playOnRepeat">
             </label>
             <label class="row">
@@ -289,6 +297,10 @@
         <span class="field-label" id="pack-icon-label">Icon</span>
         <div class="icon-picker" id="pack-icon" role="radiogroup" aria-labelledby="pack-icon-label"></div>
       </div>
+      <label class="row">
+        <span class="row-text">Sustain while held<small>Keep sounding while a key is held. Turn off for clicks and hits.</small></span>
+        <input type="checkbox" class="switch" id="pack-sustain">
+      </label>
       <div class="field">
         <span class="field-label">Sounds in this pack</span>
         <p class="hint">Each key is assigned one of these, so more sounds means more variety.</p>

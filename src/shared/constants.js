@@ -31,6 +31,12 @@ export const PitchMode = Object.freeze({
   SONG: 'song',
 });
 
+export const EchoMode = Object.freeze({
+  OFF: 'off',
+  SHORT: 'short',
+  LONG: 'long',
+});
+
 export const FxStyle = Object.freeze({
   AUTO: 'auto',
   ICON: 'icon',
@@ -165,6 +171,7 @@ export const Push = Object.freeze({
   SOUNDS_CHANGED: 'push:sounds-changed',
   TOAST: 'push:toast',
   PLAY: 'push:play',
+  RELEASE: 'push:release',
   FX: 'push:fx',
   COMBO: 'push:combo',
   BANNER: 'push:banner',

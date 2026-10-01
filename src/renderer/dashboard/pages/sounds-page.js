@@ -1,5 +1,6 @@
 /**
- * @file Sounds page: pack grid with category filters, pitch mode and song selection.
+ * @file Sounds page: pack grid with category filters, pitch and song selection, and
+ * how sounds feel (sustain, stereo, echo).
  */
 
 import { CHAOS_PACK } from '../../../shared/catalog.js';
@@ -10,7 +11,7 @@ import { SONGS } from '../../../shared/songs.js';
 import { api } from '../../shared/bridge.js';
 import { $, h, setOptions } from '../../shared/dom.js';
 import { readPreference, writePreference } from '../../shared/storage.js';
-import { PITCH_MODES } from '../copy.js';
+import { ECHO_MODES, PITCH_MODES } from '../copy.js';
 import { bindChoiceGroup } from '../components/controls.js';
 import { actionCard, soundCard } from '../components/sound-card.js';
 import { withBusy } from '../ui/busy.js';
@@ -111,6 +112,7 @@ export function mountSoundsPage(store, { packEditor, recorder }) {
   const songSelect = /** @type {HTMLSelectElement} */ ($('#song'));
   const progress = $('#song-progress');
   bindChoiceGroup(store, $('#pitch-mode'), 'pitchMode', PITCH_MODES);
+  bindChoiceGroup(store, $('#echo'), 'echo', ECHO_MODES);
   songSelect.addEventListener('change', () => store.saveSettings({ songId: songSelect.value }));
   $('#song-restart').addEventListener('click', async () => {
     await api.invoke(Invoke.SONG_RESTART);

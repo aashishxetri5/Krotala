@@ -65,6 +65,8 @@ export class KeyMapper {
       rate: clampRate(rate),
       pan: settings.stereo ? (pan ?? keyPan(key)) : 0,
       gain,
+      // Mouse clicks have no matching release event, so they never sustain.
+      sustain: Boolean(settings.sustain && sound.sustain) && keyGroup(key) !== 'Mouse',
       songNote,
       fx: sound.fx || FxStyle.ICON,
       icon: sound.icon,

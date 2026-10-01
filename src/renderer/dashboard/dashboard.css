@@ -127,6 +127,8 @@ input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: var(--focu
 .segmented button { flex: 1; border: 0; background: transparent; color: var(--text-muted); padding: 7px 4px; border-radius: var(--radius-sm); font: inherit; font-weight: 600; cursor: pointer; }
 .segmented button:hover { color: var(--text); }
 .segmented button[aria-checked="true"] { background: var(--accent); color: var(--on-accent); }
+.segmented.compact { flex: none; }
+.segmented.compact button { flex: none; padding: 6px 12px; }
 
 .option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 6px; }
 .option { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; text-align: left; }
