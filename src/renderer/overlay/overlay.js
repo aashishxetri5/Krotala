@@ -4,15 +4,22 @@
  * costs nothing.
  */
 
-import { Push } from '../../shared/constants.js';
+import { BannerKind, Push } from '../../shared/constants.js';
 import { api } from '../shared/bridge.js';
 import { $, h } from '../shared/dom.js';
 import { icon } from '../shared/icons.js';
-import { draw, spawn, step } from './particles.js';
+import { themeFor } from './banner-themes.js';
+import { burst, draw, spawn, step } from './particles.js';
 
 const MAX_PARTICLES = 400;
 const MAX_FRAME_SECONDS = 0.05;
-const COMBO_HIDE_MS = 900;
+const COMBO_HIDE_MS = 1200;
+/** The counter pulses on multiples of this. */
+const COMBO_PULSE_EVERY = 10;
+/** Vertical position of banners, as a fraction of the screen height. */
+const BANNER_CENTER_Y = 0.4;
+/** Matches the moment the title lands in the slam-in animation. */
+const BURST_DELAY_MS = 220;
 
 const canvas = /** @type {HTMLCanvasElement} */ ($('#fx'));
 const g = canvas.getContext('2d');
@@ -65,32 +72,63 @@ const comboCount = $('#combo-count');
 let comboTimer = 0;
 
 /**
- * Shows the combo counter and bumps it.
+ * Shows the combo counter. It only pulses on round numbers so it stays calm while typing.
  * @param {{ count: number }} message - Current combo.
  * @returns {void}
  */
 function showCombo({ count }) {
   comboCount.textContent = String(count);
   combo.classList.add('show');
-  combo.classList.remove('bump');
-  void combo.offsetWidth; // Restart the CSS animation.
-  combo.classList.add('bump');
+  if (count % COMBO_PULSE_EVERY === 0) {
+    combo.classList.remove('bump');
+    void combo.offsetWidth; // Restart the CSS animation.
+    combo.classList.add('bump');
+  }
   clearTimeout(comboTimer);
   comboTimer = window.setTimeout(() => combo.classList.remove('show'), COMBO_HIDE_MS);
 }
 
+/** @type {HTMLElement | null} */
+let activeBanner = null;
+let bannerTimer = 0;
+
 /**
- * Shows an animated banner that removes itself when the animation ends.
- * @param {{ title: string, subtitle?: string, kind?: string, icon?: string }} banner - Banner content.
+ * Shows a full-screen banner with an edge flash, light rays, a slam-in title and a
+ * particle burst. A new banner replaces the one on screen.
+ * @param {import('../../shared/types.js').Banner} banner - Banner content.
  * @returns {void}
  */
-function showBanner({ title, subtitle, kind, icon: iconName }) {
-  const banner = h('div', { className: `banner ${kind ?? ''}` }, [
-    h('div', { className: 'banner-title' }, [iconName ? icon(iconName, { size: 40 }) : null, title]),
-    subtitle ? h('div', { className: 'banner-subtitle', text: subtitle }) : null,
+function showBanner(banner) {
+  const theme = themeFor(banner, BannerKind.ACHIEVEMENT);
+  activeBanner?.remove();
+  clearTimeout(bannerTimer);
+
+  const element = h('div', { className: `banner banner-${banner.kind}` }, [
+    h('div', { className: 'banner-flash' }),
+    h('div', { className: 'banner-rays' }),
+    h('div', { className: 'banner-content' }, [
+      h('div', { className: 'banner-kicker' }, [banner.icon ? icon(banner.icon, { size: 28 }) : null, banner.kicker]),
+      h('div', { className: 'banner-title', text: banner.title }),
+      banner.subtitle ? h('div', { className: 'banner-subtitle', text: banner.subtitle }) : null,
+    ]),
   ]);
-  banner.addEventListener('animationend', () => banner.remove());
-  $('#banners').append(banner);
+  element.style.setProperty('--light', theme.light);
+  element.style.setProperty('--dark', theme.dark);
+  element.style.setProperty('--glow', theme.glow);
+  element.style.setProperty('--intensity', String(theme.intensity));
+  element.style.setProperty('--duration', `${theme.durationMs}ms`);
+  document.body.append(element);
+  activeBanner = element;
+  bannerTimer = window.setTimeout(() => {
+    element.remove();
+    if (activeBanner === element) activeBanner = null;
+  }, theme.durationMs);
+
+  // The burst goes off as the title lands.
+  window.setTimeout(() => {
+    burst(particles, { x: innerWidth / 2, y: innerHeight * BANNER_CENTER_Y, ...theme });
+    ensureRunning();
+  }, BURST_DELAY_MS);
 }
 
 addEventListener('resize', resize);

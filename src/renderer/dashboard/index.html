@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; media-src 'self' blob: mediastream:">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; media-src 'self' blob: mediastream:; img-src 'self' data:">
   <title>Keyboard Sounds</title>
   <link rel="stylesheet" href="../shared/tokens.css">
   <link rel="stylesheet" href="dashboard.css">
@@ -12,7 +12,7 @@
 <body class="is-loading">
   <header class="topbar">
     <div class="brand">
-      <div class="logo" data-icon="audio-lines" data-icon-size="20"></div>
+      <img class="logo" id="app-logo" alt="" width="38" height="38">
       <div class="brand-text">
         <h1>Keyboard Sounds</h1>
         <p class="status" id="status"><span class="status-dot"></span><span id="status-text">Starting…</span></p>
@@ -140,10 +140,6 @@
               <span class="row-text">Combo meter<small>Keep typing without pausing to build a streak. Milestones get a fanfare and a banner.</small></span>
               <input type="checkbox" class="switch" data-setting="comboEnabled">
             </label>
-            <label class="row">
-              <span class="row-text">Announcer<small>Reads combo milestones aloud with your system voice.</small></span>
-              <input type="checkbox" class="switch" data-setting="announcer">
-            </label>
             <h3>Try it</h3>
             <label class="visually-hidden" for="fx-playground">Effects test area</label>
             <textarea id="fx-playground" rows="4" placeholder="Turn effects on, then type here."></textarea>
@@ -194,12 +190,25 @@
           </div>
         </div>
         <div class="tiles" id="tiles">
-          <div class="tile hero"><span class="tile-label">Keys today</span><span class="tile-value" id="st-today">–</span></div>
-          <div class="tile"><span class="tile-label">All time</span><span class="tile-value" id="st-total">–</span></div>
-          <div class="tile"><span class="tile-label">Day streak</span><span class="tile-value" id="st-streak">–</span></div>
-          <div class="tile"><span class="tile-label">Speed now</span><span class="tile-value" id="st-wpm">–</span><span class="tile-unit">WPM</span></div>
-          <div class="tile"><span class="tile-label">Best speed</span><span class="tile-value" id="st-best-wpm">–</span><span class="tile-unit">WPM</span></div>
-          <div class="tile"><span class="tile-label">Best combo</span><span class="tile-value" id="st-best-combo">–</span></div>
+          <div class="tile hero">
+            <span class="tile-label">Keys today</span><span class="tile-value" id="st-today">–</span>
+            <span class="tile-detail" id="st-breakdown"></span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">All time</span><span class="tile-value" id="st-total">–</span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">Day streak</span><span class="tile-value" id="st-streak">–</span><span class="tile-unit">Days</span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">Average speed today</span><span class="tile-value" id="st-average-wpm">–</span><span class="tile-unit">WPM</span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">Best speed</span><span class="tile-value" id="st-best-wpm">–</span><span class="tile-unit">WPM</span>
+          </div>
+          <div class="tile">
+            <span class="tile-label">Best combo</span><span class="tile-value" id="st-best-combo">–</span><span class="tile-unit">Keys</span>
+          </div>
         </div>
         <div class="panel">
           <div class="panel-head"><h3>Keys per day</h3><span class="muted small">Last 30 days</span></div>
@@ -211,7 +220,7 @@
         </div>
         <div class="panel">
           <div class="panel-head">
-            <h3>Most-used keys</h3>
+            <h3>Most-used keys <span class="muted small heading-note">All time</span></h3>
             <div class="scale-legend" aria-hidden="true"><span class="muted small">Fewer</span><span class="scale-bar"></span><span class="muted small">More</span></div>
           </div>
           <div id="heatmap" class="heatmap"></div>

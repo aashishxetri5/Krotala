@@ -3,7 +3,7 @@
  */
 
 import { screen } from 'electron';
-import { FxPosition, FxStyle, PitchMode, Push, ToastKind, UiSound } from '../../shared/constants.js';
+import { BannerKind, FxPosition, FxStyle, PitchMode, Push, ToastKind, UiSound } from '../../shared/constants.js';
 import { Combo, IS_WINDOWS, Playback } from '../constants.js';
 import { isPrintable } from '../core/keyboard-layout.js';
 import { getCaretPoint } from '../services/foreground.js';
@@ -83,7 +83,7 @@ export class PlaybackController {
   celebrate(achievements) {
     for (const a of achievements) {
       if (!this.context.muteReason) this.audio.send(Push.PLAY, uiSound(UiSound.ACHIEVEMENT));
-      if (this.settings.get().fxEnabled) this.overlay.banner({ kind: 'achievement', title: a.name, subtitle: 'Achievement unlocked', icon: a.icon });
+      if (this.settings.get().fxEnabled) this.overlay.banner({ kind: BannerKind.ACHIEVEMENT, kicker: 'Achievement unlocked', title: a.name, subtitle: a.description, icon: a.icon, tier: 0 });
       else this.notifier.system(`Achievement unlocked: ${a.name}`, a.description);
       this.notifier.toast({ kind: ToastKind.ACHIEVEMENT, title: `Achievement unlocked: ${a.name}`, message: a.description });
     }
@@ -98,19 +98,24 @@ export class PlaybackController {
   recordKeystroke(key, s) {
     const result = this.stats.update((t) => t.record(key, { printable: isPrintable(key) }));
     if (s.fxEnabled && s.comboEnabled && result.combo >= Combo.COUNTER_MIN) this.overlay.combo(result.combo);
-    if (result.milestone && s.comboEnabled && !this.context.muteReason) this.celebrateCombo(result.milestone, s);
+    if (result.milestone && s.comboEnabled && !this.context.muteReason) this.celebrateCombo(result.milestone);
     this.celebrate(result.achievements);
   }
 
   /**
+   * Plays the fanfare and shows the banner for a combo milestone.
    * @param {number} count - Combo milestone reached.
-   * @param {import('../../shared/types.js').Settings} s - Current settings.
    * @returns {void}
    */
-  celebrateCombo(count, s) {
+  celebrateCombo(count) {
     this.audio.send(Push.PLAY, uiSound(UiSound.COMBO));
-    if (s.announcer) this.audio.send(Push.ANNOUNCE, { text: `Combo ${count}!` });
-    this.overlay.banner({ title: `Combo ×${count}`, subtitle: Combo.PHRASES[count] });
+    this.overlay.banner({
+      kind: BannerKind.COMBO,
+      kicker: 'Combo',
+      title: `×${count}`,
+      subtitle: Combo.PHRASES[count],
+      tier: Combo.MILESTONES.indexOf(count),
+    });
   }
 
   /**

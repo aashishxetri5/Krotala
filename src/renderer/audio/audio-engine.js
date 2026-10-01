@@ -21,7 +21,6 @@ import { api } from '../shared/bridge.js';
 /** Oldest voices are cut beyond this many simultaneous sounds. */
 const MAX_VOICES = 32;
 const VOLUME_SMOOTHING_SECONDS = 0.02;
-const ANNOUNCER = { rate: 1.15, pitch: 0.8, gainBoost: 1.2 };
 const NON_PACK_IDS = new Set([MUTE, PACK_DEFAULT, CHAOS_SOUND_ID, '']);
 
 class AudioEngine {
@@ -140,22 +139,6 @@ class AudioEngine {
   }
 
   /**
-   * Speaks a short phrase with the system's text-to-speech voice.
-   * @param {{ text: string }} message - Phrase to speak.
-   * @returns {void}
-   */
-  announce({ text }) {
-    if (!('speechSynthesis' in window) || !this.settings?.announcer) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = ANNOUNCER.rate;
-    utterance.pitch = ANNOUNCER.pitch;
-    utterance.volume = Math.min(1, this.settings.volume * ANNOUNCER.gainBoost);
-    utterance.voice = speechSynthesis.getVoices().find((v) => /^en/i.test(v.lang)) ?? null;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(utterance);
-  }
-
-  /**
    * Applies new settings and preloads every pack they reference.
    * @param {import('../../shared/types.js').Settings} settings - Current settings.
    * @returns {void}
@@ -171,7 +154,6 @@ class AudioEngine {
 
 const engine = new AudioEngine();
 api.on(Push.PLAY, (command) => engine.play(command));
-api.on(Push.ANNOUNCE, (message) => engine.announce(message));
 api.on(Push.SETTINGS, (settings) => engine.applySettings(settings));
 api.on(Push.SOUNDS_CHANGED, ({ ids }) => {
   engine.forget(ids);

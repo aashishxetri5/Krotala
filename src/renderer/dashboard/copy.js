@@ -2,7 +2,25 @@
  * @file User-facing labels and descriptions for the dashboard.
  */
 
-import { FxPosition, FxStyle, PitchMode, UpdateStatus } from '../../shared/constants.js';
+import { FxPosition, FxStyle, PitchMode, StatsRules, UpdateStatus } from '../../shared/constants.js';
+
+/**
+ * @param {number} ms - Duration.
+ * @returns {string} Duration in seconds, e.g. `0.7 seconds`.
+ */
+const seconds = (ms) => `${ms / 1000} second${ms === 1000 ? '' : 's'}`;
+
+/** Definitions shown when hovering a Stats tile (first line is the title). */
+export const STAT_DEFINITIONS = Object.freeze({
+  today: 'Keys today\nEvery key press counts, including Shift, Ctrl, Alt, Tab and Enter.\nHolding a key down counts once.',
+  total: 'All time\nEvery key press since you installed the app.',
+  streak: 'Day streak\nDays in a row with at least one key press.',
+  averageWpm: `Average speed today\nWords per minute while typing (a word is ${StatsRules.CHARS_PER_WORD} characters).\n`
+    + `Pauses longer than ${seconds(StatsRules.ACTIVE_GAP_MS)} and key mashing faster than ${StatsRules.MAX_TYPING_WPM} WPM are left out.`,
+  bestWpm: `Best speed\nFastest words per minute held for ${seconds(StatsRules.SPEED_WINDOW_MS)}.\n`
+    + `Key mashing faster than ${StatsRules.MAX_TYPING_WPM} WPM is left out.`,
+  bestCombo: `Best combo\nMost keys in a row without a pause longer than ${seconds(StatsRules.COMBO_WINDOW_MS)}.`,
+});
 
 export const PAGES = Object.freeze([
   { id: 'sounds', label: 'Sounds', icon: 'audio-lines' },

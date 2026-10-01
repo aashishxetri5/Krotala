@@ -24,7 +24,6 @@ export const DEFAULT_SETTINGS = Object.freeze({
   fxSize: 1,
   fxPosition: FxPosition.CARET,
   comboEnabled: true,
-  announcer: true,
   profiles: Object.freeze([]),
   autoMuteMic: true,
   autoMuteFullscreen: false,
@@ -61,7 +60,6 @@ const USER_SETTABLE = Object.freeze({
   fxSize: isNumberIn(Limits.FX_SIZE_MIN, Limits.FX_SIZE_MAX),
   fxPosition: isOneOf(FxPosition),
   comboEnabled: isBoolean,
-  announcer: isBoolean,
   profiles: (v) => Array.isArray(v) && v.length <= Limits.MAX_PROFILES
     && v.every((p) => p && isId(p.app) && p.app.length > 0 && isId(p.soundId)),
   autoMuteMic: isBoolean,
@@ -91,10 +89,12 @@ export function sanitizePatch(patch) {
  */
 export function migrateSettings(raw) {
   const { stats: legacyStats = null, ...saved } = raw || {};
+  // Settings removed in later versions are dropped rather than carried forward.
+  const known = Object.fromEntries(Object.entries(saved).filter(([key]) => key in DEFAULT_SETTINGS));
   const settings = {
     ...structuredClone(DEFAULT_SETTINGS),
-    ...saved,
-    overrides: { ...DEFAULT_SETTINGS.overrides, ...saved.overrides },
+    ...known,
+    overrides: { ...DEFAULT_SETTINGS.overrides, ...known.overrides },
   };
   return { settings, legacyStats };
 }

@@ -1,19 +1,32 @@
 /**
  * @file Typing statistics, combos and achievements. Only counts are kept, never
  * the text or the order of keys.
+ *
+ * Definitions used throughout:
+ * - A *key* is any key press (letters, Shift, Ctrl, Tab, arrows…). Auto-repeat from
+ *   holding a key down is not counted.
+ * - A *character* is a key that types something: letters, digits, space, punctuation.
+ * - A *word* is five characters, the standard used by typing tests.
  */
 
 import { Combo, Stats, Wpm } from '../constants.js';
 import { ACHIEVEMENTS } from './achievements.js';
 
 const DAY_MS = 86_400_000;
+const MINUTE_MS = 60_000;
+/** Per-day counters, all keyed by `YYYY-MM-DD`. */
+const DAILY_FIELDS = ['days', 'characters', 'otherKeys', 'activeMs', 'activeChars'];
 
 /**
  * @typedef {object} StatsData
- * @property {number} total - Keys typed since install.
- * @property {Record<string, number>} days - `YYYY-MM-DD` → key count.
- * @property {Record<string, number>} keys - Key name → press count (heatmap).
- * @property {number} bestWpm
+ * @property {number} total - Keys since install, including history from before per-day tracking.
+ * @property {Record<string, number>} days - Keys per day.
+ * @property {Record<string, number>} characters - Characters per day.
+ * @property {Record<string, number>} otherKeys - Non-character keys per day (Shift, Ctrl, Enter…).
+ * @property {Record<string, number>} activeMs - Time spent typing per day: gaps between characters of at most ACTIVE_GAP_MS.
+ * @property {Record<string, number>} activeChars - Characters that ended one of those gaps.
+ * @property {Record<string, number>} keys - Key name → presses, all time (heatmap).
+ * @property {number} bestWpm - Fastest speed sustained over a WINDOW_MS window, excluding key mashing.
  * @property {number} bestCombo
  * @property {number} songNotes
  * @property {string[]} packsTried
@@ -37,10 +50,30 @@ const DAY_MS = 86_400_000;
  * @property {UnlockedAchievement[]} achievements - Achievements unlocked by this key.
  */
 
+/**
+ * @typedef {object} StatsSnapshot
+ * @property {number} total
+ * @property {number} today - Keys today.
+ * @property {number | null} charactersToday - Null when part of today predates the breakdown.
+ * @property {number | null} otherKeysToday - Null when part of today predates the breakdown.
+ * @property {number | null} averageWpm - Today's speed while typing, or null with too little data.
+ * @property {number} bestWpm
+ * @property {number} bestCombo
+ * @property {number} streak
+ * @property {number} songNotes
+ * @property {{ day: string, count: number }[]} days
+ * @property {Record<string, number>} keys
+ * @property {UnlockedAchievement[]} achievements
+ */
+
 /** @returns {StatsData} Empty statistics. */
 const emptyStats = () => ({
   total: 0,
   days: {},
+  characters: {},
+  otherKeys: {},
+  activeMs: {},
+  activeChars: {},
   keys: {},
   bestWpm: 0,
   bestCombo: 0,
@@ -55,6 +88,24 @@ const emptyStats = () => ({
  * @returns {string} Local calendar day as `YYYY-MM-DD`.
  */
 export const dayKey = (ms) => new Date(ms).toLocaleDateString('en-CA');
+
+/**
+ * Converts characters typed over a duration to words per minute.
+ * @param {number} chars - Characters.
+ * @param {number} ms - Duration in milliseconds.
+ * @returns {number} Rounded WPM.
+ */
+export const toWpm = (chars, ms) => Math.round(chars / Wpm.CHARS_PER_WORD / (ms / MINUTE_MS));
+
+/**
+ * @param {Record<string, number>} map - Counter map.
+ * @param {string} key - Counter name.
+ * @param {number} [amount=1] - Increment.
+ * @returns {void}
+ */
+const increment = (map, key, amount = 1) => {
+  map[key] = (map[key] || 0) + amount;
+};
 
 /**
  * @param {import('./achievements.js').Achievement} a - Definition.
@@ -75,15 +126,20 @@ export class StatsTracker {
     this.data = { ...emptyStats(), ...data };
     this.combo = 0;
     this.lastKeyAt = 0;
-    /** @type {number[]} */
-    this.recentPrintable = [];
+    this.lastCharacterAt = -Infinity;
+    /** @type {number[]} Times of the last few characters, for mash detection. */
+    this.lastCharacters = [];
+    /** @type {number[]} Times of typed (not mashed) characters inside the speed window. */
+    this.recentCharacters = [];
+    // Best speeds recorded before mash detection existed may be mashing.
+    if (this.data.bestWpm > Wpm.MAX_TYPING_WPM) this.data.bestWpm = 0;
   }
 
   /**
    * Records one key press.
    * @param {string} key - Key name.
    * @param {object} [options]
-   * @param {boolean} [options.printable=false] - Whether the key produces a character.
+   * @param {boolean} [options.printable=false] - Whether the key types a character.
    * @returns {KeystrokeResult} Combo state and newly unlocked achievements.
    */
   record(key, { printable = false } = {}) {
@@ -91,38 +147,39 @@ export class StatsTracker {
     const d = this.data;
     const day = dayKey(t);
     d.total += 1;
-    d.days[day] = (d.days[day] || 0) + 1;
-    d.keys[key] = (d.keys[key] || 0) + 1;
+    increment(d.days, day);
+    increment(d.keys, key);
+    if (printable) {
+      increment(d.characters, day);
+      this.trackSpeed(t, day);
+    } else {
+      increment(d.otherKeys, day);
+    }
 
     this.combo = t - this.lastKeyAt <= Combo.WINDOW_MS ? this.combo + 1 : 1;
     this.lastKeyAt = t;
     d.bestCombo = Math.max(d.bestCombo, this.combo);
     const milestone = Combo.MILESTONES.includes(this.combo) ? this.combo : null;
 
-    if (printable) this.trackSpeed(t);
     return { combo: this.combo, milestone, achievements: this.checkAchievements() };
-  }
-
-  /**
-   * Words per minute over the last few seconds of typing (a word is five characters).
-   * @returns {number} Current WPM, or 0 when idle.
-   */
-  currentWpm() {
-    const t = this.now();
-    const recent = this.recentPrintable.filter((ts) => t - ts <= Wpm.WINDOW_MS);
-    if (recent.length < Wpm.CHARS_PER_WORD || t - recent.at(-1) > Wpm.IDLE_MS) return 0;
-    const spanMs = Math.max(recent.at(-1) - recent[0], 2000);
-    return Math.round(recent.length / Wpm.CHARS_PER_WORD / (spanMs / 60_000));
-  }
-
-  /** @returns {number} Current combo, or 0 once it has lapsed. */
-  currentCombo() {
-    return this.now() - this.lastKeyAt <= Combo.WINDOW_MS ? this.combo : 0;
   }
 
   /** @returns {number} Keys typed today. */
   today() {
     return this.data.days[dayKey(this.now())] || 0;
+  }
+
+  /**
+   * Today's typing speed, counting only time spent typing (pauses longer than
+   * ACTIVE_GAP_MS are left out).
+   * @returns {number | null} WPM, or null until there is enough typing to measure.
+   */
+  averageWpmToday() {
+    const day = dayKey(this.now());
+    const ms = this.data.activeMs[day] || 0;
+    const chars = this.data.activeChars[day] || 0;
+    if (ms < Wpm.MIN_ACTIVE_MS_FOR_AVERAGE || chars < Wpm.MIN_CHARS_FOR_AVERAGE) return null;
+    return toWpm(chars, ms);
   }
 
   /**
@@ -174,22 +231,31 @@ export class StatsTracker {
    */
   prune() {
     const cutoff = dayKey(this.now() - Stats.HISTORY_DAYS * DAY_MS);
-    for (const day of Object.keys(this.data.days)) if (day < cutoff) delete this.data.days[day];
+    for (const field of DAILY_FIELDS) {
+      for (const day of Object.keys(this.data[field])) if (day < cutoff) delete this.data[field][day];
+    }
   }
 
   /**
    * Everything the Stats page shows.
-   * @returns {object} Serializable snapshot.
+   * @returns {StatsSnapshot} Serializable snapshot.
    */
   snapshot() {
+    const day = dayKey(this.now());
+    const today = this.today();
+    const characters = this.data.characters[day] || 0;
+    const otherKeys = this.data.otherKeys[day] || 0;
+    // Days that began before the breakdown existed can't be split accurately.
+    const complete = characters + otherKeys === today;
     return {
       total: this.data.total,
-      today: this.today(),
-      streak: this.streak(),
-      currentWpm: this.currentWpm(),
+      today,
+      charactersToday: complete ? characters : null,
+      otherKeysToday: complete ? otherKeys : null,
+      averageWpm: this.averageWpmToday(),
       bestWpm: this.data.bestWpm,
-      combo: this.currentCombo(),
       bestCombo: this.data.bestCombo,
+      streak: this.streak(),
       songNotes: this.data.songNotes,
       days: this.lastDays(Stats.CHART_DAYS),
       keys: this.data.keys,
@@ -199,7 +265,7 @@ export class StatsTracker {
 
   /**
    * @param {number} count - Number of days.
-   * @returns {{ day: string, count: number }[]} Daily counts, oldest first, ending today.
+   * @returns {{ day: string, count: number }[]} Daily key counts, oldest first, ending today.
    */
   lastDays(count) {
     return Array.from({ length: count }, (_, i) => {
@@ -209,16 +275,48 @@ export class StatsTracker {
   }
 
   /**
-   * Updates the rolling speed window and the best WPM.
+   * Speed over the characters typed in the last WINDOW_MS. Uses the number of
+   * intervals between characters, so the first character of a burst adds no time.
+   * @returns {number} WPM, or 0 with fewer than two characters in the window.
+   */
+  windowWpm() {
+    const chars = this.recentCharacters;
+    if (chars.length < 2) return 0;
+    return toWpm(chars.length - 1, Math.max(chars.at(-1) - chars[0], 1));
+  }
+
+  /**
+   * Updates today's typing time and the best speed for one character. Characters
+   * typed while mashing keys are left out of both.
    * @param {number} t - Current time.
+   * @param {string} day - Current day key.
    * @returns {void}
    */
-  trackSpeed(t) {
-    this.recentPrintable.push(t);
-    while (this.recentPrintable.length && t - this.recentPrintable[0] > Wpm.WINDOW_MS) this.recentPrintable.shift();
-    if (this.recentPrintable.length < Wpm.MIN_KEYS_FOR_BEST) return;
-    const wpm = this.currentWpm();
-    if (wpm <= Wpm.MAX_PLAUSIBLE) this.data.bestWpm = Math.max(this.data.bestWpm, wpm);
+  trackSpeed(t, day) {
+    const gap = t - this.lastCharacterAt;
+    this.lastCharacterAt = t;
+    this.lastCharacters.push(t);
+    if (this.lastCharacters.length > Wpm.MASH_SAMPLE_CHARS) this.lastCharacters.shift();
+    if (this.isMashing()) return;
+
+    if (gap <= Wpm.ACTIVE_GAP_MS) {
+      increment(this.data.activeMs, day, gap);
+      increment(this.data.activeChars, day);
+    }
+    this.recentCharacters.push(t);
+    while (t - this.recentCharacters[0] > Wpm.WINDOW_MS) this.recentCharacters.shift();
+    if (this.recentCharacters.length >= Wpm.MIN_KEYS_FOR_BEST) {
+      this.data.bestWpm = Math.max(this.data.bestWpm, Math.min(this.windowWpm(), Wpm.MAX_TYPING_WPM));
+    }
+  }
+
+  /**
+   * @returns {boolean} True when the last few characters came faster than anyone types.
+   */
+  isMashing() {
+    const chars = this.lastCharacters;
+    if (chars.length < Wpm.MASH_SAMPLE_CHARS) return false;
+    return toWpm(chars.length - 1, Math.max(chars.at(-1) - chars[0], 1)) > Wpm.MAX_TYPING_WPM;
   }
 
   /**

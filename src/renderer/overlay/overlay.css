@@ -11,45 +11,131 @@ html, body {
 
 canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
 
+/* ---------- Combo counter ---------- */
+
 .combo {
   position: fixed; top: 28px; right: 36px;
   display: flex; align-items: baseline; gap: 4px;
-  color: white; font-weight: 800; font-size: 44px; font-variant-numeric: tabular-nums;
+  color: white; font-weight: 800; font-size: 44px; font-style: italic; font-variant-numeric: tabular-nums;
   text-shadow: 0 2px 0 #4b2fd6, 0 6px 18px rgba(124, 92, 255, 0.7);
   opacity: 0; transform: scale(0.8);
   transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
 }
 .combo-x { font-size: 30px; }
-.combo small { font-size: 15px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.85; margin-left: 4px; }
+.combo small { font-size: 15px; font-style: normal; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.85; margin-left: 4px; }
 .combo.show { opacity: 1; transform: scale(1); }
-.combo.bump { animation: bump 0.12s ease-out; }
+.combo.bump { animation: bump 0.18s ease-out; }
 
-.banners {
-  position: fixed; top: 12%; left: 0; right: 0;
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
+/* ---------- Banners ----------
+   Themed per tier through --light, --dark, --glow, --intensity (0–1) and --duration,
+   set from banner-themes.js. */
+
+.banner { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+
+.banner-flash {
+  position: absolute; inset: 0; opacity: 0;
+  box-shadow: inset 0 0 calc(70px + 150px * var(--intensity)) calc(4px + 40px * var(--intensity)) var(--glow);
+  animation: flash var(--duration) ease-out both;
 }
-.banner { text-align: center; color: white; animation: banner 2.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards; }
+
+.banner-rays {
+  position: absolute; left: 50%; top: 40%;
+  width: 170vmax; height: 170vmax; translate: -50% -50%;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--glow) 55%, transparent) 0deg 3deg, transparent 3deg 15deg);
+  -webkit-mask: radial-gradient(circle, black 0%, transparent 30%);
+  mask: radial-gradient(circle, black 0%, transparent 30%);
+  opacity: 0;
+  animation: rays var(--duration) ease-out both;
+}
+
+.banner-content {
+  position: absolute; left: 0; right: 0; top: 40%; translate: 0 -50%;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  animation: slam var(--duration) cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+
+.banner-kicker {
+  display: flex; align-items: center; gap: 12px;
+  color: white; font-size: 24px; font-weight: 800; text-transform: uppercase;
+  text-shadow: 0 0 18px var(--glow), 0 2px 6px rgba(0, 0, 0, 0.6);
+  animation: kicker 1s ease-out both;
+}
+.banner-kicker .icon { color: var(--light); filter: drop-shadow(0 0 10px var(--glow)); }
+
 .banner-title {
-  display: flex; align-items: center; justify-content: center; gap: 14px;
-  font-size: 60px; font-weight: 900; letter-spacing: 0.01em; text-transform: uppercase;
-  color: #ffffff;
-  text-shadow: 0 4px 0 #3a22b8, 0 10px 28px rgba(124, 92, 255, 0.7);
+  margin: -6px 0 -10px;
+  padding: 0 0.12em;
+  font-size: calc(120px + 90px * var(--intensity));
+  font-weight: 900; font-style: italic; letter-spacing: -0.02em; line-height: 1.05;
+  color: transparent;
+  background:
+    linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.95) 50%, transparent 60%) 150% 0 / 250% 100% no-repeat,
+    linear-gradient(180deg, #ffffff 0%, var(--light) 38%, var(--dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.35);
+  filter: drop-shadow(0 8px 0 color-mix(in srgb, var(--dark) 65%, black)) drop-shadow(0 0 36px var(--glow));
+  animation: shine 1.3s ease-out 0.25s both, shake 0.45s linear 0.2s both;
 }
-.banner-subtitle {
-  margin-top: 2px; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
-}
-.banner.achievement .banner-title { font-size: 42px; text-transform: none; text-shadow: 0 3px 0 #a86a00, 0 10px 24px rgba(255, 176, 32, 0.55); }
-.banner.achievement .icon { color: var(--gold); filter: drop-shadow(0 3px 0 #a86a00); }
 
-@keyframes banner {
-  0% { opacity: 0; transform: scale(0.4) translateY(20px); }
-  12% { opacity: 1; transform: scale(1.08) translateY(0); }
-  20% { transform: scale(1); }
-  80% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.96) translateY(-16px); }
+.banner-subtitle {
+  margin-top: 6px;
+  font-size: 28px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.32em;
+  color: var(--light);
+  text-shadow: 0 0 18px var(--glow), 0 2px 6px rgba(0, 0, 0, 0.6);
+  animation: rise 0.6s ease-out 0.35s both;
+}
+
+.banner-achievement .banner-title { font-size: 76px; font-style: normal; letter-spacing: -0.01em; }
+.banner-achievement .banner-subtitle { font-size: 20px; text-transform: none; letter-spacing: 0.04em; }
+
+@keyframes slam {
+  0% { transform: scale(2.8); opacity: 0; filter: blur(14px); }
+  9% { transform: scale(0.94); opacity: 1; filter: blur(0); }
+  13% { transform: scale(1.05); }
+  17%, 80% { transform: scale(1); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1.1) translateY(-28px); opacity: 0; filter: blur(8px); }
+}
+@keyframes shake {
+  0%, 100% { translate: 0 0; }
+  15% { translate: calc(-3px - 9px * var(--intensity)) calc(2px + 4px * var(--intensity)); }
+  30% { translate: calc(3px + 8px * var(--intensity)) calc(-2px - 3px * var(--intensity)); }
+  45% { translate: calc(-2px - 6px * var(--intensity)) calc(1px + 2px * var(--intensity)); }
+  60% { translate: calc(2px + 4px * var(--intensity)) 0; }
+  80% { translate: -1px 0; }
+}
+@keyframes shine {
+  from { background-position: 150% 0, 0 0; }
+  to { background-position: -60% 0, 0 0; }
+}
+@keyframes kicker {
+  from { opacity: 0; letter-spacing: 0.15em; }
+  to { opacity: 1; letter-spacing: 0.6em; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes flash {
+  0% { opacity: 0; }
+  5% { opacity: calc(0.35 + 0.5 * var(--intensity)); }
+  30% { opacity: calc(0.1 + 0.25 * var(--intensity)); }
+  100% { opacity: 0; }
+}
+@keyframes rays {
+  0% { opacity: 0; rotate: 0deg; }
+  10% { opacity: calc(0.15 + 0.45 * var(--intensity)); }
+  75% { opacity: calc(0.08 + 0.25 * var(--intensity)); }
+  100% { opacity: 0; rotate: 35deg; }
 }
 @keyframes bump {
-  from { transform: scale(1.18); }
+  from { transform: scale(1.25); }
   to { transform: scale(1); }
+}
+
+/* Without motion, banners appear and disappear in place. */
+@media (prefers-reduced-motion: reduce) {
+  .banner-content, .banner-title, .banner-kicker, .banner-subtitle { animation: none !important; }
+  .banner-title { background-position: -60% 0, 0 0; }
 }

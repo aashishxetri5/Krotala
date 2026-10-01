@@ -86,6 +86,20 @@ export const Limits = Object.freeze({
   MAX_RECORDING_MS: 4000,
 });
 
+/** Rules that define the typing statistics. The Stats page explains them to users. */
+export const StatsRules = Object.freeze({
+  /** Longest pause between two keys that keeps a combo going. */
+  COMBO_WINDOW_MS: 700,
+  /** Best speed is the fastest rate held over this window. */
+  SPEED_WINDOW_MS: 10_000,
+  /** Gaps between characters up to this long count as time spent typing. */
+  ACTIVE_GAP_MS: 2000,
+  /** A word is five characters, as in typing tests. */
+  CHARS_PER_WORD: 5,
+  /** Faster bursts are key mashing, not typing, and are left out of speed stats. */
+  MAX_TYPING_WPM: 200,
+});
+
 export const UpdateStatus = Object.freeze({
   DEV: 'dev',
   UNAVAILABLE: 'unavailable',
@@ -96,6 +110,11 @@ export const UpdateStatus = Object.freeze({
   DOWNLOADING: 'downloading',
   READY: 'ready',
   ERROR: 'error',
+});
+
+export const BannerKind = Object.freeze({
+  COMBO: 'combo',
+  ACHIEVEMENT: 'achievement',
 });
 
 export const ToastKind = Object.freeze({
@@ -146,7 +165,6 @@ export const Push = Object.freeze({
   SOUNDS_CHANGED: 'push:sounds-changed',
   TOAST: 'push:toast',
   PLAY: 'push:play',
-  ANNOUNCE: 'push:announce',
   FX: 'push:fx',
   COMBO: 'push:combo',
   BANNER: 'push:banner',

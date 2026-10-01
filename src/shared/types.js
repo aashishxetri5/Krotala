@@ -65,7 +65,6 @@
  * @property {number} fxSize
  * @property {string} fxPosition - One of FxPosition.
  * @property {boolean} comboEnabled
- * @property {boolean} announcer
  * @property {AppProfile[]} profiles
  * @property {boolean} autoMuteMic
  * @property {boolean} autoMuteFullscreen
@@ -85,6 +84,17 @@
  * @property {boolean} micActive
  * @property {string[]} recentApps - Recently focused executables, newest first.
  * @property {{ appDetection: boolean, micDetection: boolean }} features
+ */
+
+/**
+ * Large on-screen announcement for combo milestones and achievements.
+ * @typedef {object} Banner
+ * @property {string} kind - One of BannerKind.
+ * @property {string} kicker - Small line above the title.
+ * @property {string} title - Headline.
+ * @property {string} [subtitle] - Line below the title.
+ * @property {string} [icon] - Icon name from src/shared/icons.js.
+ * @property {number} tier - Intensity, from 0 (mildest) up to the number of combo milestones minus one.
  */
 
 export {};

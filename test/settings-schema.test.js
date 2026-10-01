@@ -33,6 +33,12 @@ test('migration keeps saved values, fills new defaults and extracts v1 stats', (
   assert.deepEqual(legacyStats, { total: 41, today: 41, day: '2026-10-01' });
 });
 
+test('settings that no longer exist are dropped', () => {
+  const { settings } = migrateSettings({ announcer: true, volume: 0.5 });
+  assert.equal('announcer' in settings, false);
+  assert.equal(settings.volume, 0.5);
+});
+
 test('a missing file yields defaults', () => {
   const { settings, legacyStats } = migrateSettings(null);
   assert.deepEqual(settings, structuredClone(DEFAULT_SETTINGS));

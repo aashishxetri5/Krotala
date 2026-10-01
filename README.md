@@ -8,7 +8,7 @@ A desktop app that plays a sound on every key press, in every app. Choose from p
 - **Song mode.** Each key press plays the next note of a song (Für Elise, Ode to Joy, In the Hall of the Mountain King and others), so anything you type performs it.
 - **Melody and Wobble modes.** Melody turns the keyboard into a pentatonic instrument; Wobble adds a slight random detune.
 - **3D stereo.** Keys on the left of the keyboard play in your left ear, keys on the right in your right.
-- **On-screen effects.** Bullet holes, lasers, musical notes, confetti, bubbles and blade slashes appear where you type, with a combo meter, milestone banners and an optional announcer.
+- **On-screen effects.** Bullet holes, lasers, musical notes, confetti, bubbles and blade slashes appear where you type, with a combo meter and milestone banners.
 - **Per-app sounds.** Use a different pack in each app, or mute specific apps.
 - **Auto-mute** while your microphone is in use (calls, meetings) or a full-screen app is open.
 - **Your own packs.** Import audio files or record with your microphone, then share the pack as a single `.kbpack` file that opens straight into the app.

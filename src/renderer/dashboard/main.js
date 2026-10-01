@@ -63,7 +63,7 @@ function mountNavigation(onShow) {
 }
 
 /**
- * Header: status line, volume and the on/off switch.
+ * Header: app icon, status line, volume and the on/off switch.
  * @param {import('./store.js').Store} store - Dashboard store.
  * @returns {void}
  */
@@ -79,6 +79,9 @@ function mountHeader(store) {
     format: formatPercent,
   });
 
+  store.subscribe(['info'], ({ info }) => {
+    if (info) /** @type {HTMLImageElement} */ ($('#app-logo')).src = info.icon;
+  });
   store.subscribe(['settings', 'runtime', 'sounds'], ({ settings, runtime, sounds }) => {
     if (!settings || !runtime) return;
     enabled.checked = settings.enabled;

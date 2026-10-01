@@ -1,5 +1,5 @@
 /**
- * @file Effects page: overlay style, size and position, combo meter and announcer.
+ * @file Effects page: overlay style, size and position, and the combo meter.
  */
 
 import { $ } from '../../shared/dom.js';

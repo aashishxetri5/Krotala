@@ -6,6 +6,7 @@ import { app, globalShortcut, ipcMain } from 'electron';
 import { Invoke, Send } from '../../shared/constants.js';
 import { Hotkey } from '../constants.js';
 import { requestMicrophoneAccess } from '../services/system-integration.js';
+import { appIcon } from '../windows/app-icons.js';
 
 /**
  * Only the app's own pages may call into the main process.
@@ -71,6 +72,7 @@ export function registerIpc({ settings, packs, stats, context, mapper, playback,
     platform: process.platform,
     hotkey: Hotkey.TOGGLE_MUTE_LABEL,
     hotkeyRegistered: globalShortcut.isRegistered(Hotkey.TOGGLE_MUTE),
+    icon: appIcon().toDataURL(),
   }));
   handle(Invoke.SONG_PROGRESS, () => mapper.songProgress(settings.get()));
   handle(Invoke.SONG_RESTART, () => mapper.restartSong());

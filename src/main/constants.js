@@ -5,6 +5,7 @@
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { StatsRules } from '../shared/constants.js';
 
 const MAIN_DIR = path.dirname(fileURLToPath(import.meta.url));
 const SRC_DIR = path.join(MAIN_DIR, '..');
@@ -47,26 +48,38 @@ export const DashboardWindowSize = Object.freeze({
   BACKGROUND: '#101018',
 });
 
+export const Input = Object.freeze({
+  /**
+   * A key that is still marked as held but has been silent for this long is a new
+   * press, not an auto-repeat. Windows sometimes drops key-up events (lock screen,
+   * Administrator windows); without this the next press would be ignored.
+   */
+  REPEAT_MAX_GAP_MS: 1500,
+});
+
 export const Combo = Object.freeze({
-  /** Longest pause between two keys that keeps a combo going. */
-  WINDOW_MS: 700,
-  MILESTONES: Object.freeze([25, 50, 100, 200, 300, 500, 1000]),
+  WINDOW_MS: StatsRules.COMBO_WINDOW_MS,
+  /** Combo lengths that trigger a banner, from least to most dramatic. */
+  MILESTONES: Object.freeze([50, 100, 250, 500, 1000]),
   PHRASES: Object.freeze({
-    25: 'Nice', 50: 'On fire', 100: 'Unstoppable', 200: 'Rampage', 300: 'Godlike', 500: 'Legendary', 1000: 'Inhuman',
+    50: 'On fire', 100: 'Unstoppable', 250: 'Rampage', 500: 'Godlike', 1000: 'Legendary',
   }),
   /** Combos below this are not shown on the overlay counter. */
-  COUNTER_MIN: 10,
+  COUNTER_MIN: 20,
 });
 
 export const Wpm = Object.freeze({
-  WINDOW_MS: 10_000,
+  WINDOW_MS: StatsRules.SPEED_WINDOW_MS,
   /** Minimum keys in the window before a best score is recorded. */
   MIN_KEYS_FOR_BEST: 25,
-  /** Higher readings come from macros or pasted input and are ignored. */
-  MAX_PLAUSIBLE: 250,
-  /** Typing idle for this long reads as 0 WPM. */
-  IDLE_MS: 3000,
-  CHARS_PER_WORD: 5,
+  MAX_TYPING_WPM: StatsRules.MAX_TYPING_WPM,
+  /** Number of recent characters whose rate decides whether the user is mashing keys. */
+  MASH_SAMPLE_CHARS: 5,
+  CHARS_PER_WORD: StatsRules.CHARS_PER_WORD,
+  ACTIVE_GAP_MS: StatsRules.ACTIVE_GAP_MS,
+  /** Today's average speed is shown once there is at least this much typing. */
+  MIN_ACTIVE_MS_FOR_AVERAGE: 10_000,
+  MIN_CHARS_FOR_AVERAGE: 25,
 });
 
 export const Stats = Object.freeze({

@@ -5,6 +5,7 @@
 
 import { EventEmitter } from 'node:events';
 import uiohook from 'uiohook-napi';
+import { KeyRepeatFilter } from '../core/key-repeat.js';
 
 const { uIOhook, UiohookKey } = uiohook;
 
@@ -29,8 +30,7 @@ const keyName = (code) => KEY_NAMES[code] ?? `Key${code}`;
 export class InputHook extends EventEmitter {
   constructor() {
     super();
-    /** @type {Set<number>} */
-    this.pressed = new Set();
+    this.repeats = new KeyRepeatFilter();
     this.started = false;
   }
 
@@ -41,12 +41,11 @@ export class InputHook extends EventEmitter {
   start() {
     if (this.started) return;
     uIOhook.on('keydown', (e) => {
-      const isRepeat = this.pressed.has(e.keycode);
-      this.pressed.add(e.keycode);
+      const isRepeat = this.repeats.press(e.keycode, Date.now());
       this.emit('keydown', { key: keyName(e.keycode), isRepeat });
     });
     uIOhook.on('keyup', (e) => {
-      this.pressed.delete(e.keycode);
+      this.repeats.release(e.keycode);
       this.emit('keyup', { key: keyName(e.keycode) });
     });
     uIOhook.on('mousedown', (e) => this.emit('mousedown', { button: e.button, x: e.x, y: e.y }));

@@ -22,6 +22,7 @@ const ICON_GRID = 24;
  * @property {number} [vx] - Velocity (px/s).
  * @property {number} [vy]
  * @property {number} [gravity] - Downward acceleration (px/s²).
+ * @property {number} [drag] - Exponential slow-down rate (1/s).
  * @property {number} [rot] - Rotation (radians).
  * @property {number} [vr] - Angular velocity (radians/s).
  */
@@ -90,6 +91,44 @@ export function spawn(particles, { style, x, y, size, icon }) {
 }
 
 /**
+ * Adds the explosion behind a banner: shockwaves, a ring of light streaks and,
+ * for intense themes, confetti.
+ * @param {Particle[]} particles - Live particle list.
+ * @param {object} options
+ * @param {number} options.x - Centre x.
+ * @param {number} options.y - Centre y.
+ * @param {string} options.glow - Shockwave colour.
+ * @param {string[]} options.sparks - Streak and confetti colours.
+ * @param {number} options.intensity - 0–1.
+ * @returns {void}
+ */
+export function burst(particles, { x, y, glow, sparks, intensity }) {
+  particles.push({ kind: 'shockwave', x, y, r0: 30, r1: 320 + 520 * intensity, width: 14, color: glow, ttl: 0.75 });
+  particles.push({ kind: 'shockwave', x, y, r0: 10, r1: 180 + 300 * intensity, width: 6, color: '#ffffff', ttl: 0.5 });
+
+  const streaks = Math.round(36 + 84 * intensity);
+  for (let i = 0; i < streaks; i++) {
+    const angle = (i / streaks) * Math.PI * 2 + rand(-0.08, 0.08);
+    const speed = rand(420, 1100) * (0.7 + intensity * 0.6);
+    particles.push({
+      kind: 'streak', x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      gravity: 260, drag: 2.2, color: pick(sparks), width: rand(2, 4.5), ttl: rand(0.55, 1.1),
+    });
+  }
+
+  if (intensity < 0.5) return;
+  const confetti = Math.round(40 * intensity);
+  for (let i = 0; i < confetti; i++) {
+    const angle = rand(-Math.PI * 0.95, -Math.PI * 0.05);
+    const speed = rand(500, 1100);
+    particles.push({
+      kind: 'rect', x, y, w: rand(7, 12), h: rand(10, 18), color: pick(sparks),
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, gravity: 1300, rot: rand(0, Math.PI), vr: rand(-12, 12), ttl: rand(1.2, 1.8),
+    });
+  }
+}
+
+/**
  * Advances a particle by one frame.
  * @param {Particle} p - Particle.
  * @param {number} dt - Seconds since the last frame.
@@ -99,6 +138,11 @@ export function step(p, dt) {
   p.life = (p.life ?? 0) + dt;
   if (p.life >= p.ttl) return false;
   if (p.vx !== undefined) {
+    if (p.drag) {
+      const slow = Math.exp(-p.drag * dt);
+      p.vx *= slow;
+      p.vy *= slow;
+    }
     p.vy += (p.gravity ?? 0) * dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
@@ -147,6 +191,30 @@ const DRAWERS = {
     g.lineWidth = p.width * fade + 0.5;
     g.beginPath();
     g.arc(p.x, p.y, p.r0 + (p.r1 - p.r0) * ease, 0, Math.PI * 2);
+    g.stroke();
+  },
+  shockwave(g, p, k, fade) {
+    const ease = 1 - (1 - k) ** 4;
+    g.globalAlpha = fade ** 1.5;
+    g.strokeStyle = p.color;
+    g.shadowColor = p.color;
+    g.shadowBlur = 30;
+    g.lineWidth = p.width * fade + 1;
+    g.beginPath();
+    g.arc(p.x, p.y, p.r0 + (p.r1 - p.r0) * ease, 0, Math.PI * 2);
+    g.stroke();
+  },
+  streak(g, p, k, fade) {
+    const tail = 0.035;
+    g.globalAlpha = Math.min(1, fade * 1.4);
+    g.strokeStyle = p.color;
+    g.shadowColor = p.color;
+    g.shadowBlur = 12;
+    g.lineCap = 'round';
+    g.lineWidth = p.width * fade + 0.5;
+    g.beginPath();
+    g.moveTo(p.x - p.vx * tail, p.y - p.vy * tail);
+    g.lineTo(p.x, p.y);
     g.stroke();
   },
   rect(g, p, k, fade) {

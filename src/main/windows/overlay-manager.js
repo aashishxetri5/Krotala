@@ -53,7 +53,7 @@ export class OverlayManager {
 
   /**
    * Shows a banner on the display under the mouse.
-   * @param {{ title: string, subtitle?: string, kind?: string }} banner - Banner text.
+   * @param {import('../../shared/types.js').Banner} banner - Banner content.
    * @returns {void}
    */
   banner(banner) {

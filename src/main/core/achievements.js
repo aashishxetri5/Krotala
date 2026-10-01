@@ -28,7 +28,7 @@ export const ACHIEVEMENTS = Object.freeze([
   { id: 'keys-1m', icon: 'crown', name: 'Legendary Typist', description: 'Type 1,000,000 keys', test: (s) => s.total >= 1_000_000 },
   { id: 'day-5k', icon: 'footprints', name: 'Marathon', description: 'Type 5,000 keys in one day', test: (s, c) => c.today >= 5_000 },
   { id: 'combo-50', icon: 'sparkles', name: 'On Fire', description: 'Reach a 50× combo', test: (s) => s.bestCombo >= 50 },
-  { id: 'combo-200', icon: 'wind', name: 'Unstoppable', description: 'Reach a 200× combo', test: (s) => s.bestCombo >= 200 },
+  { id: 'combo-250', icon: 'wind', name: 'Rampage', description: 'Reach a 250× combo', test: (s) => s.bestCombo >= 250 },
   { id: 'combo-500', icon: 'zap', name: 'Godlike', description: 'Reach a 500× combo', test: (s) => s.bestCombo >= 500 },
   { id: 'wpm-60', icon: 'rabbit', name: 'Quick Fingers', description: 'Type at 60 words per minute', test: (s) => s.bestWpm >= 60 },
   { id: 'wpm-100', icon: 'gauge', name: 'Speed Demon', description: 'Type at 100 words per minute', test: (s) => s.bestWpm >= 100 },
