@@ -1,0 +1,20 @@
+{
+  "name": "keyboard-sounds",
+  "productName": "Keyboard Sounds",
+  "version": "1.0.0",
+  "description": "Play fun sounds on every keystroke - runs in the background with a tray icon and dashboard.",
+  "main": "src/main/main.js",
+  "scripts": {
+    "prestart": "npm run sounds",
+    "start": "electron .",
+    "sounds": "node scripts/generate-sounds.js",
+    "check": "node scripts/check-catalog.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "uiohook-napi": "^1.5.5"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1"
+  }
+}

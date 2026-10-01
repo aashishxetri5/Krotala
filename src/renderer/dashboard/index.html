@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'">
+  <title>Keyboard Sounds</title>
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">♪</div>
+      <div>
+        <h1>Keyboard Sounds</h1>
+        <p class="muted" id="status-line">Loading…</p>
+      </div>
+    </div>
+    <label class="power" title="Toggle sounds">
+      <input type="checkbox" id="enabled">
+      <span class="power-track"><span class="power-thumb"></span></span>
+      <span class="power-label" id="enabled-label">On</span>
+    </label>
+  </header>
+
+  <main>
+    <section class="panel controls">
+      <div class="volume">
+        <label for="volume" class="label">Volume</label>
+        <div class="volume-row">
+          <span aria-hidden="true">🔈</span>
+          <input type="range" id="volume" min="0" max="100" step="1">
+          <span aria-hidden="true">🔊</span>
+          <output id="volume-value" class="pill">70%</output>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><span class="stat-value" id="stat-today">0</span><span class="label">keys today</span></div>
+        <div class="stat"><span class="stat-value" id="stat-total">0</span><span class="label">all time</span></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <h2>Pick a sound</h2>
+        <div class="chips" id="filters" role="tablist"></div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section class="columns">
+      <div class="panel">
+        <h3>Pitch</h3>
+        <div class="segmented" id="pitch-mode" role="radiogroup">
+          <button data-value="off" role="radio">Off</button>
+          <button data-value="wobble" role="radio">Wobble</button>
+          <button data-value="melody" role="radio">Melody</button>
+        </div>
+        <p class="hint" id="pitch-hint"></p>
+
+        <h3>Behaviour</h3>
+        <label class="row-toggle">
+          <span>Repeat while a key is held<small>Fires on auto-repeat, like holding Backspace</small></span>
+          <input type="checkbox" id="playOnRepeat" class="switch">
+        </label>
+        <label class="row-toggle">
+          <span>Mouse clicks too<small>Play the sound on every click</small></span>
+          <input type="checkbox" id="mouseClicks" class="switch">
+        </label>
+      </div>
+
+      <div class="panel">
+        <h3>Special keys</h3>
+        <p class="hint">Give these keys their own sound, or silence them.</p>
+        <div class="override"><label for="ov-Enter">↵ Enter</label><select id="ov-Enter" data-key="Enter"></select></div>
+        <div class="override"><label for="ov-Space">␣ Space</label><select id="ov-Space" data-key="Space"></select></div>
+        <div class="override"><label for="ov-Backspace">⌫ Backspace</label><select id="ov-Backspace" data-key="Backspace"></select></div>
+      </div>
+
+      <div class="panel">
+        <h3>App</h3>
+        <label class="row-toggle">
+          <span>Launch at startup<small>Starts quietly in the system tray</small></span>
+          <input type="checkbox" id="launchAtLogin" class="switch">
+        </label>
+        <div class="row-toggle static">
+          <span>Mute / unmute anywhere<small id="hotkey-note">Global shortcut</small></span>
+          <kbd id="hotkey">Ctrl + Alt + M</kbd>
+        </div>
+        <p class="hint">Closing this window keeps Keyboard Sounds running in the tray. Right-click the tray icon to quit.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Try it</h3>
+      <textarea id="playground" rows="3" placeholder="Type here to test your sound… (it works in every app, too)"></textarea>
+    </section>
+  </main>
+
+  <footer class="muted">
+    🔒 Your keystrokes are never recorded or sent anywhere — they're only counted.
+    <span id="version"></span>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>
