@@ -1,9 +1,18 @@
-// Shared by the audio and dashboard windows. Exposes a small whitelisted IPC bridge.
+// Shared by the audio, overlay and dashboard windows. Exposes a small whitelisted IPC bridge.
 const { contextBridge, ipcRenderer } = require('electron');
 
-const INVOKE = ['settings:get', 'settings:set', 'sounds:list', 'sound:data', 'sounds:import', 'sounds:remove', 'stats:get', 'app:info'];
+const INVOKE = [
+  'settings:get', 'settings:set', 'sounds:list', 'sound:data', 'stats:get', 'runtime:get', 'app:info',
+  'songs:list', 'song:restart', 'updates:get', 'updates:check', 'updates:install', 'mic:request',
+  'packs:import', 'packs:addFiles', 'packs:update', 'packs:removeVariant', 'packs:delete', 'packs:export',
+  'packs:saveRecording', 'profiles:browse',
+];
 const SEND = ['preview', 'audio:error'];
-const LISTEN = ['settings', 'stats', 'key', 'preview', 'sounds:changed', 'toast'];
+const LISTEN = [
+  'settings', 'stats', 'runtime', 'updates', 'sounds:changed', 'toast', // dashboard
+  'play', 'announce',                                                     // audio engine
+  'fx', 'combo', 'banner',                                                // overlay
+];
 
 contextBridge.exposeInMainWorld('api', {
   invoke: (channel, ...args) => (INVOKE.includes(channel)

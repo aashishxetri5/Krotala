@@ -1,8 +1,8 @@
-// Audio engine: lives in a hidden window, receives key events from the main process
-// and plays decoded buffers through Web Audio (low latency, unlimited overlap).
-
+// Audio engine: lives in a hidden window and plays what the main process tells it to.
+// All "which sound / pitch / pan" decisions happen in src/main/keymap.js; this file
+// only decodes buffers and plays them through Web Audio (low latency, free overlap).
 // `api` is the IPC bridge exposed globally by src/preload.js.
-const CHAOS_ID = '__chaos'; // keep in sync with src/shared/catalog.js
+
 const MAX_VOICES = 32;
 
 const ctx = new AudioContext({ latencyHint: 'interactive' });
@@ -17,9 +17,8 @@ limiter.release.value = 0.15;
 master.connect(limiter).connect(ctx.destination);
 
 let settings = null;
-let soundList = [];
 const loading = new Map(); // id -> Promise
-const ready = new Map();   // id -> { variants: AudioBuffer[], special: { [key]: AudioBuffer } }
+const ready = new Map();   // id -> { variants: AudioBuffer[], special: { [key]: AudioBuffer }, release: AudioBuffer[] }
 const voices = [];
 
 // ---------- Loading ----------
@@ -34,10 +33,13 @@ function load(id) {
     loading.set(id, (async () => {
       try {
         const data = await api.invoke('sound:data', id);
-        const variants = await Promise.all(data.variants.map(decode));
         const special = {};
         for (const [key, bytes] of Object.entries(data.special || {})) special[key] = await decode(bytes);
-        ready.set(id, { variants, special });
+        ready.set(id, {
+          variants: await Promise.all(data.variants.map(decode)),
+          special,
+          release: await Promise.all((data.release || []).map(decode)),
+        });
       } catch (err) {
         // Stay in `loading` so a broken file reports once instead of on every keystroke.
         api.send('audio:error', { id, message: String(err?.message || err) });
@@ -47,126 +49,84 @@ function load(id) {
   return loading.get(id);
 }
 
-async function refreshSoundList() {
-  soundList = await api.invoke('sounds:list');
-  const ids = new Set(soundList.map((s) => s.id));
-  for (const id of [...loading.keys()]) {
-    if (!ids.has(id)) { loading.delete(id); ready.delete(id); }
-  }
+function forget(id) {
+  loading.delete(id);
+  ready.delete(id);
 }
 
-// ---------- Key -> sound mapping ----------
-
-function hash(str) {
-  let h = 5381;
-  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) >>> 0;
-  return h;
-}
-
-// Melody mode: keyboard rows climb a pentatonic scale, so any typing sounds musical.
-const PENTATONIC = [0, 2, 4, 7, 9];
-const DEGREE = {};
-['ZXCVBNM', 'ASDFGHJKL', 'QWERTYUIOP', '1234567890'].forEach((row, r) => {
-  [...row].forEach((ch, c) => { DEGREE[ch] = r * 2 + c; });
-});
-
-function melodySemitones(key) {
-  let degree = DEGREE[key.replace(/^Numpad(?=\d$)/, '')];
-  if (degree === undefined) degree = hash(key) % 7;
-  return Math.floor(degree / 5) * 12 + PENTATONIC[degree % 5] - 12;
-}
-
-function playbackRate(key) {
-  switch (settings.pitchMode) {
-    case 'wobble': return 2 ** ((Math.random() * 2 - 1) * 1.5 / 12);
-    case 'melody': return 2 ** (melodySemitones(key) / 12);
-    default: return 1;
-  }
-}
-
-function randomBuiltIn() {
-  const builtIns = soundList.filter((s) => s.builtIn);
-  return builtIns[Math.floor(Math.random() * builtIns.length)]?.id;
-}
-
-function pickBuffer(id, pack, key) {
-  if (pack.special[key]) return pack.special[key];
-  const n = pack.variants.length;
-  if (id === 'dialpad') {
-    const digit = /^(?:Numpad)?(\d)$/.exec(key);
-    if (digit) return pack.variants[Number(digit[1])];
-    if (key === 'NumpadMultiply') return pack.variants[10];
-  }
-  return pack.variants[hash(key) % n];
+function bufferFor(pack, slot) {
+  if (slot.type === 'special') return pack.special[slot.key];
+  if (slot.type === 'release') return pack.release[slot.index];
+  return pack.variants[slot.index] ?? pack.variants[0];
 }
 
 // ---------- Playback ----------
 
-function play(buffer, rate = 1, gain = 1) {
+function play({ soundId, slot, rate = 1, pan = 0, gain = 1 }) {
+  const pack = ready.get(soundId);
+  if (!pack) { load(soundId); return; } // first use: load now, play from the next key
+  const buffer = bufferFor(pack, slot);
+  if (!buffer) return;
   if (ctx.state === 'suspended') ctx.resume();
+
   const src = ctx.createBufferSource();
   src.buffer = buffer;
   src.playbackRate.value = rate;
   const g = ctx.createGain();
   g.gain.value = gain;
-  src.connect(g).connect(master);
+  const panner = ctx.createStereoPanner();
+  panner.pan.value = pan;
+  src.connect(g).connect(panner).connect(master);
   src.start();
+
   voices.push(src);
   src.onended = () => {
     const i = voices.indexOf(src);
     if (i >= 0) voices.splice(i, 1);
-    g.disconnect();
+    panner.disconnect();
   };
   if (voices.length > MAX_VOICES) {
     try { voices.shift().stop(); } catch { /* already ended */ }
   }
 }
 
-function onKey({ name }) {
-  if (!settings?.enabled) return;
-  const key = name === 'NumpadEnter' ? 'Enter' : name;
-  const override = settings.overrides?.[key];
-  if (override === 'mute') return;
-
-  let id = override || settings.soundId;
-  if (id === CHAOS_ID) id = randomBuiltIn();
-  if (!id) return;
-
-  const pack = ready.get(id);
-  if (!pack) { load(id); return; }
-  const gain = settings.pitchMode === 'wobble' ? 0.85 + Math.random() * 0.15 : 1;
-  play(pickBuffer(id, pack, key), playbackRate(key), gain);
-}
-
-async function onPreview(id) {
-  if (id === CHAOS_ID) id = randomBuiltIn();
-  await load(id);
-  const pack = ready.get(id);
-  if (!pack) return;
-  play(pack.variants[Math.floor(Math.random() * pack.variants.length)]);
+// Game-style announcer for combo milestones, using the OS text-to-speech voices.
+function announce({ text }) {
+  if (!('speechSynthesis' in window) || !settings?.announcer) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.15;
+  utterance.pitch = 0.8;
+  utterance.volume = Math.min(1, (settings.volume ?? 0.7) * 1.2);
+  const voices = speechSynthesis.getVoices();
+  utterance.voice = voices.find((v) => /en[-_](US|GB)/i.test(v.lang) && /male|david|daniel|guy/i.test(v.name))
+    || voices.find((v) => /^en/i.test(v.lang)) || null;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utterance);
 }
 
 function applySettings(s) {
   settings = s;
   // Squared slider feels closer to perceived loudness than linear.
   master.gain.setTargetAtTime(s.volume * s.volume, ctx.currentTime, 0.02);
-  load(s.soundId === CHAOS_ID ? randomBuiltIn() : s.soundId);
-  for (const id of Object.values(s.overrides || {})) if (id && id !== 'mute') load(id);
+  for (const id of [s.soundId, s.keyUpSound, ...Object.values(s.overrides || {}), ...s.profiles.map((p) => p.soundId)]) {
+    if (id && !['mute', 'pack', '__chaos'].includes(id)) load(id);
+  }
 }
 
 // ---------- Boot ----------
 
 (async () => {
-  api.on('key', onKey);
-  api.on('preview', onPreview);
+  api.on('play', play);
+  api.on('announce', announce);
   api.on('settings', applySettings);
-  api.on('sounds:changed', async () => {
-    await refreshSoundList();
+  api.on('sounds:changed', ({ ids = [] } = {}) => {
+    ids.forEach(forget);
     applySettings(settings);
   });
 
-  await refreshSoundList();
   applySettings(await api.invoke('settings:get'));
-  // Warm up every built-in pack so switching (and Chaos mode) is instant.
-  for (const s of soundList) if (s.builtIn) load(s.id);
+  // Warm up every pack so switching (and Chaos mode) is instant.
+  for (const s of await api.invoke('sounds:list')) load(s.id);
+  load('ui:combo');
+  load('ui:achievement');
 })();
