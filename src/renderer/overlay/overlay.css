@@ -1,0 +1,86 @@
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+  font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+}
+
+canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+
+.combo {
+  position: fixed;
+  top: 28px;
+  right: 36px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: white;
+  font-weight: 800;
+  font-size: 44px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 0 #4b2fd6, 0 6px 18px rgba(124, 92, 255, 0.7);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.25s, transform 0.25s;
+}
+.combo::before { content: "×"; font-size: 30px; }
+.combo small { font-size: 16px; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.85; }
+.combo.show { opacity: 1; transform: scale(1); }
+.combo.bump { animation: bump 0.12s ease-out; }
+
+.banners {
+  position: fixed;
+  top: 12%;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+.banner {
+  text-align: center;
+  color: white;
+  animation: banner 2.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+}
+.banner .title {
+  font-size: 64px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #fff 20%, #c7b8ff 60%, #7c5cff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #3a22b8) drop-shadow(0 10px 24px rgba(124, 92, 255, 0.6));
+}
+.banner .sub {
+  margin-top: 2px;
+  font-size: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+.banner.achievement .title {
+  font-size: 44px;
+  background: linear-gradient(180deg, #fff 20%, #ffe28a 60%, #ffb020);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 3px 0 #a86a00) drop-shadow(0 10px 24px rgba(255, 176, 32, 0.5));
+}
+
+@keyframes banner {
+  0% { opacity: 0; transform: scale(0.4) translateY(20px); }
+  12% { opacity: 1; transform: scale(1.08) translateY(0); }
+  20% { transform: scale(1); }
+  80% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.96) translateY(-16px); }
+}
+@keyframes bump {
+  0% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
