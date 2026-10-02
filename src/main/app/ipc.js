@@ -67,6 +67,10 @@ export function registerIpc({ settings, packs, stats, context, mapper, playback,
   handle(Invoke.SOUNDS_LIST, () => packs.list());
   handle(Invoke.SOUND_DATA, (id) => packs.readSoundData(id));
   handle(Invoke.STATS_GET, () => stats.snapshot());
+  handle(Invoke.STATS_RESET, () => {
+    stats.reset();
+    return stats.snapshot();
+  });
   handle(Invoke.RUNTIME_GET, () => context.state());
   handle(Invoke.APP_INFO, () => ({
     version: app.getVersion(),

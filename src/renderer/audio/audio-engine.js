@@ -57,6 +57,8 @@ const Sustain = Object.freeze({
   /** A held sound stops on its own after this long, in case a key-up is lost. */
   MAX_HOLD_MS: 10_000,
   STOP_MARGIN_SECONDS: 0.02,
+  /** Fade-out of a sound cut off by the next one in its choke group. */
+  CHOKE_SECONDS: 0.05,
 });
 
 /** Decodes packs and plays, sustains and releases their samples through Web Audio. */
@@ -89,6 +91,8 @@ export class AudioEngine {
     this.held = new Map();
     /** @type {WeakMap<AudioBuffer, { buffer: AudioBuffer, start: number, offset: number } | null>} */
     this.loops = new WeakMap();
+    /** @type {Map<string, { sample: Voice, voiceId: string | null }>} Latest sound per choke group. */
+    this.chokes = new Map();
     /** @type {Map<string, number>} Bumped by forget() so decodes that were in flight are discarded. */
     this.generations = new Map();
   }
@@ -167,7 +171,7 @@ export class AudioEngine {
    * @param {PlayCommand} command - What to play.
    * @returns {void}
    */
-  play({ soundId, slot, rate, pan, gain, sustain, voice }) {
+  play({ soundId, slot, rate, pan, gain, sustain, voice, choke }) {
     const pack = this.ready.get(soundId);
     if (!pack) {
       this.load(soundId);
@@ -181,6 +185,7 @@ export class AudioEngine {
     if (this.context instanceof AudioContext && this.context.state === 'suspended') this.context.resume();
 
     const sample = this.startSample(buffer, { rate, pan, gain });
+    if (choke) this.chokePrevious(choke, { sample, voiceId: sustain ? voice : null });
     if (sustain && voice) this.hold(voice, buffer, sample, { rate, gain });
   }
 
@@ -245,6 +250,42 @@ export class AudioEngine {
     const held = { sample, loop, loopAmp, gain, startedAt: now, handOverAt, timer: 0 };
     held.timer = window.setTimeout(() => this.release(voiceId, held), Sustain.MAX_HOLD_MS);
     this.held.set(voiceId, held);
+  }
+
+  /**
+   * Remembers the newest sound of a choke group and quickly fades out the one before
+   * it, including its sustain loop if its key is still held.
+   * @param {string} group - One of ChokeGroup.
+   * @param {{ sample: Voice, voiceId: string | null }} current - The sound just started.
+   * @returns {void}
+   */
+  chokePrevious(group, current) {
+    const previous = this.chokes.get(group);
+    this.chokes.set(group, current);
+    if (!previous) return;
+    const held = previous.voiceId ? this.held.get(previous.voiceId) : undefined;
+    if (held && held.sample === previous.sample) {
+      this.held.delete(previous.voiceId);
+      clearTimeout(held.timer);
+      this.fadeOut(held.loop, held.loopAmp, Sustain.CHOKE_SECONDS);
+    }
+    this.fadeOut(previous.sample.source, previous.sample.amp, Sustain.CHOKE_SECONDS);
+  }
+
+  /**
+   * Fades a source to silence and stops it.
+   * @param {AudioBufferSourceNode} source - Playing (or scheduled) source.
+   * @param {GainNode} amp - Its gain node.
+   * @param {number} seconds - Fade length.
+   * @returns {void}
+   */
+  fadeOut(source, amp, seconds) {
+    const now = this.context.currentTime;
+    const level = amp.gain.value;
+    amp.gain.cancelScheduledValues(now);
+    amp.gain.setValueAtTime(level, now);
+    amp.gain.linearRampToValueAtTime(0, now + seconds);
+    source.stop(now + seconds + Sustain.STOP_MARGIN_SECONDS);
   }
 
   /**

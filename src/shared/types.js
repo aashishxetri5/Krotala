@@ -37,6 +37,7 @@
  * @property {number} gain - Linear gain applied before the master volume.
  * @property {boolean} [sustain] - Keep sounding until a matching RELEASE arrives.
  * @property {string} [voice] - Identifies a sustained sound (the key name) for its RELEASE.
+ * @property {string} [choke] - One of ChokeGroup: starting this sound fades out the group's previous one.
  */
 
 /**

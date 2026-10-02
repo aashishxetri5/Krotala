@@ -46,6 +46,15 @@ export class StatsService {
   }
 
   /**
+   * Clears every statistic and achievement, and saves the empty state right away.
+   * @returns {void}
+   */
+  reset() {
+    this.tracker = new StatsTracker();
+    this.store.flush();
+  }
+
+  /**
    * Writes pending changes immediately.
    * @returns {void}
    */

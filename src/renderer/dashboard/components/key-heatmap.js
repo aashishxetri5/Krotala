@@ -13,8 +13,6 @@ const ROWS = [
   [['Shift', 'Shift', 2.25], ...[...'ZXCVBNM'].map((k) => [k, k]), ['Comma', ','], ['Period', '.'], ['Slash', '/'], ['ShiftRight', 'Shift', 2.75]],
   [['Ctrl', 'Ctrl', 1.25], ['Meta', 'Win', 1.25], ['Alt', 'Alt', 1.25], ['Space', 'Space', 6.25], ['AltRight', 'Alt', 1.25], ['CtrlRight', 'Ctrl', 1.25]],
 ];
-const KEY_UNIT_PX = 40;
-const KEY_GAP_PX = 4;
 /** Minimum tint for any key that was pressed at least once. */
 const MIN_HEAT = 0.12;
 /** Above this tint, labels switch to white for contrast. */
@@ -44,7 +42,7 @@ export function renderKeyHeatmap(container, counts) {
       text: label,
       dataset: { tip: `${label}\n${formatNumber(n)} presses` },
     });
-    cell.style.width = `${width * KEY_UNIT_PX + (width - 1) * KEY_GAP_PX}px`;
+    cell.style.setProperty('--units', String(width)); // sized in CSS so the keyboard fits its panel
     cell.style.setProperty('--heat', heat.toFixed(3));
     return cell;
   }))));

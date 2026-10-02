@@ -6,6 +6,8 @@ import { h } from '../../shared/dom.js';
 import { formatLongDay, formatNumber, formatShortDay } from '../../shared/format.js';
 
 const TICK_COUNT = 4;
+/** Bars this close to either end get their label aligned inward. */
+const EDGE_LABEL_SLOTS = 3;
 
 /**
  * Picks a round tick step (1, 2, 2.5, 5 or 10 × a power of ten).
@@ -60,7 +62,9 @@ export function renderDayChart(chart, tableBody, days) {
     }, bar);
     // Label only the busiest day; the axis and tooltips carry the rest.
     if (i === peak) {
-      const label = h('span', { className: 'bar-label', text: formatNumber(d.count) });
+      // Labels near either end are aligned inward so they never spill past the chart.
+      const edge = i < EDGE_LABEL_SLOTS ? ' align-start' : i >= days.length - EDGE_LABEL_SLOTS ? ' align-end' : '';
+      const label = h('span', { className: `bar-label${edge}`, text: formatNumber(d.count) });
       label.style.bottom = percent(d.count);
       slot.append(label);
     }

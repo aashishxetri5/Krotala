@@ -49,6 +49,11 @@ export const FxStyle = Object.freeze({
   SLASH: 'slash',
 });
 
+/** Sounds in the same choke group cut each other off, like a single-note instrument. */
+export const ChokeGroup = Object.freeze({
+  SONG: 'song',
+});
+
 export const FxPosition = Object.freeze({
   CARET: 'caret',
   MOUSE: 'mouse',
@@ -141,6 +146,7 @@ export const Invoke = Object.freeze({
   SOUNDS_LIST: 'sounds:list',
   SOUND_DATA: 'sounds:data',
   STATS_GET: 'stats:get',
+  STATS_RESET: 'stats:reset',
   RUNTIME_GET: 'runtime:get',
   APP_INFO: 'app:info',
   SONG_PROGRESS: 'song:progress',

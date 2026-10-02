@@ -3,7 +3,7 @@
  * it is loading are queued and delivered once it is ready.
  */
 
-import { app } from 'electron';
+import { app, screen } from 'electron';
 import { APP_NAME } from '../../shared/constants.js';
 import { DashboardWindowSize, MAX_QUEUED_DASHBOARD_MESSAGES, Paths } from '../constants.js';
 import { appIcon } from './app-icons.js';
@@ -88,14 +88,21 @@ export class DashboardWindow {
   }
 
   /**
+   * Creates the window on the display under the mouse, sized to fit its work area.
    * @returns {void}
    */
   create() {
+    const { workArea } = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
+    const fit = (preferred, available) => Math.min(preferred, available - 2 * DashboardWindowSize.SCREEN_MARGIN);
+    const width = fit(DashboardWindowSize.WIDTH, workArea.width);
+    const height = fit(DashboardWindowSize.HEIGHT, workArea.height);
     this.win = createWindow({
-      width: DashboardWindowSize.WIDTH,
-      height: DashboardWindowSize.HEIGHT,
-      minWidth: DashboardWindowSize.MIN_WIDTH,
-      minHeight: DashboardWindowSize.MIN_HEIGHT,
+      width,
+      height,
+      x: Math.round(workArea.x + (workArea.width - width) / 2),
+      y: Math.round(workArea.y + (workArea.height - height) / 2),
+      minWidth: Math.min(DashboardWindowSize.MIN_WIDTH, width),
+      minHeight: Math.min(DashboardWindowSize.MIN_HEIGHT, height),
       title: APP_NAME,
       icon: appIcon(),
       backgroundColor: DashboardWindowSize.BACKGROUND,

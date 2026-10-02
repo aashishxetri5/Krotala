@@ -1,13 +1,14 @@
 /**
- * @file Settings page: shortcut info, update status and controls, version.
+ * @file Settings page: shortcut info, update status and controls, stats reset, version.
  */
 
-import { APP_NAME, Invoke, UpdateStatus } from '../../../shared/constants.js';
+import { APP_NAME, Invoke, ToastKind, UpdateStatus } from '../../../shared/constants.js';
 import { api } from '../../shared/bridge.js';
 import { $ } from '../../shared/dom.js';
 import { describeUpdate } from '../copy.js';
 import { withBusy } from '../ui/busy.js';
-import { showError } from '../ui/toast.js';
+import { confirmDialog } from '../ui/confirm-dialog.js';
+import { showError, showToast } from '../ui/toast.js';
 
 /** States in which "Check now" does nothing useful. */
 const CHECK_DISABLED = [UpdateStatus.DEV, UpdateStatus.UNAVAILABLE, UpdateStatus.CHECKING, UpdateStatus.DOWNLOADING];
@@ -28,6 +29,23 @@ export function mountSettingsPage(store) {
       showError("Couldn't check for updates", err);
     }
   });
+  const resetButton = /** @type {HTMLButtonElement} */ ($('#stats-reset'));
+  resetButton.addEventListener('click', async () => {
+    const confirmed = await confirmDialog({
+      title: 'Reset all stats?',
+      message: 'Key counts, speeds, streaks, combos and achievements will be cleared. This cannot be undone.',
+      confirmLabel: 'Reset stats',
+      danger: true,
+    });
+    if (!confirmed) return;
+    try {
+      store.set({ stats: await withBusy(resetButton, () => api.invoke(Invoke.STATS_RESET)) });
+      showToast({ kind: ToastKind.SUCCESS, title: 'Stats reset', message: 'Counting starts again from your next key press.' });
+    } catch (err) {
+      showError("Couldn't reset your stats", err);
+    }
+  });
+
   installButton.addEventListener('click', async () => {
     try {
       await withBusy(installButton, () => api.invoke(Invoke.UPDATES_INSTALL));

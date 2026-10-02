@@ -2,7 +2,9 @@
  * @file Decides what to play for a key press: pack, sample, pitch, stereo position and gain.
  */
 
-import { CHAOS_SOUND_ID, FxStyle, MUTE, PACK_DEFAULT, PitchMode } from '../../shared/constants.js';
+import {
+  CHAOS_SOUND_ID, ChokeGroup, FxStyle, MUTE, PACK_DEFAULT, PitchMode,
+} from '../../shared/constants.js';
 import { songById } from '../../shared/songs.js';
 import { Playback } from '../constants.js';
 import { hashKey, isModifier, keyGroup, keyPan, melodySemitones, normalizeKey } from './keyboard-layout.js';
@@ -64,7 +66,10 @@ export class KeyMapper {
       soundId: sound.id,
       slot: this.slotFor(sound, key),
       rate: clampRate(rate),
-      pan: settings.stereo ? (pan ?? keyPan(key)) : 0,
+      // Song notes stay centred and cut the previous note, so the melody stays
+      // recognisable however fast you type.
+      pan: settings.stereo && !songNote ? (pan ?? keyPan(key)) : 0,
+      ...(songNote ? { choke: ChokeGroup.SONG } : {}),
       gain,
       // Mouse clicks have no matching release event, so they never sustain.
       sustain: Boolean(settings.sustain && sound.sustain) && keyGroup(key) !== 'Mouse',

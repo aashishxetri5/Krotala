@@ -43,8 +43,10 @@ export const Timing = Object.freeze({
 export const DashboardWindowSize = Object.freeze({
   WIDTH: 1120,
   HEIGHT: 820,
-  MIN_WIDTH: 780,
-  MIN_HEIGHT: 580,
+  MIN_WIDTH: 720,
+  MIN_HEIGHT: 520,
+  /** Space kept free around the window when the screen is smaller than the default size. */
+  SCREEN_MARGIN: 24,
   /** Shown before the page paints; matches --bg in src/renderer/shared/tokens.css. */
   BACKGROUND: '#101018',
 });
