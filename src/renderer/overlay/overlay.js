@@ -14,6 +14,8 @@ import { burst, draw, spawn, step } from './particles.js';
 const MAX_PARTICLES = 400;
 const MAX_FRAME_SECONDS = 0.05;
 const COMBO_HIDE_MS = 1200;
+/** Without a frame for this long, animation is paused (Windows can do this to overlay windows). */
+const STALL_MS = 500;
 /** The counter pulses on multiples of this. */
 const COMBO_PULSE_EVERY = 10;
 /** Vertical position of banners, as a fraction of the screen height. */
@@ -29,6 +31,7 @@ const g = canvas.getContext('2d');
 const particles = [];
 let running = false;
 let lastFrame = 0;
+let watchdog = 0;
 
 /**
  * Matches the canvas to the window size and pixel density.
@@ -51,11 +54,40 @@ function frame(now) {
   lastFrame = now;
   g.clearRect(0, 0, innerWidth, innerHeight);
   for (let i = particles.length - 1; i >= 0; i--) {
-    if (step(particles[i], dt)) draw(g, particles[i], now / 1000);
-    else particles.splice(i, 1);
+    const p = particles[i];
+    let alive;
+    try {
+      alive = step(p, dt, now);
+      if (alive) draw(g, p, now / 1000);
+    } catch (err) {
+      // A particle that fails to draw is dropped; the animation itself must go on.
+      console.error(`Overlay effect "${p.kind}" failed:`, err);
+      alive = false;
+    }
+    if (!alive) particles.splice(i, 1);
   }
   if (particles.length) requestAnimationFrame(frame);
-  else running = false;
+  else stop();
+}
+
+/**
+ * Ends the animation loop and leaves the canvas empty.
+ * @returns {void}
+ */
+function stop() {
+  running = false;
+  clearInterval(watchdog);
+  particles.length = 0;
+  g.clearRect(0, 0, innerWidth, innerHeight);
+}
+
+/**
+ * Clears the overlay if animation frames stop arriving, so a paused animation can
+ * never leave a frozen effect on screen.
+ * @returns {void}
+ */
+function checkForStall() {
+  if (running && performance.now() - lastFrame > STALL_MS) stop();
 }
 
 /**
@@ -66,6 +98,7 @@ function ensureRunning() {
   if (running) return;
   running = true;
   lastFrame = performance.now();
+  watchdog = window.setInterval(checkForStall, STALL_MS);
   requestAnimationFrame(frame);
 }
 
@@ -145,6 +178,13 @@ function showBanner(banner) {
 }
 
 addEventListener('resize', resize);
+// A graphics reset (sleep, driver update) wipes the canvas state; start clean afterwards.
+canvas.addEventListener('contextlost', stop);
+canvas.addEventListener('contextrestored', resize);
+// Coming back from being hidden: drop anything stale rather than resume a frozen frame.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && running) stop();
+});
 resize();
 api.on(Push.FX, (fx) => {
   if (particles.length >= MAX_PARTICLES) return;

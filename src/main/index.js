@@ -30,6 +30,9 @@ import { TrayController } from './windows/tray.js';
 
 // The hidden audio window must be able to play without a user gesture.
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+// Windows can judge the transparent, click-through overlay "covered" and pause its
+// rendering, which would freeze an effect on screen. The overlay must always render.
+if (IS_WINDOWS) app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 /**
  * @param {string[]} argv - Process arguments.

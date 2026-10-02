@@ -18,6 +18,7 @@ const ICON_GRID = 24;
  * @property {number} x
  * @property {number} y
  * @property {number} ttl - Lifetime in seconds.
+ * @property {number} [born] - Time of the particle's first frame (milliseconds).
  * @property {number} [life] - Age in seconds.
  * @property {number} [vx] - Velocity (px/s).
  * @property {number} [vy]
@@ -154,13 +155,16 @@ export function burst(particles, { x, y, glow, sparks, intensity }) {
 }
 
 /**
- * Advances a particle by one frame.
+ * Advances a particle by one frame. Age comes from the clock rather than from
+ * summed frame times, so after any pause in animation the particle expires on time.
  * @param {Particle} p - Particle.
- * @param {number} dt - Seconds since the last frame.
+ * @param {number} dt - Seconds since the last frame (capped), for movement.
+ * @param {number} now - Current time in milliseconds (performance.now()).
  * @returns {boolean} False once the particle has expired.
  */
-export function step(p, dt) {
-  p.life = (p.life ?? 0) + dt;
+export function step(p, dt, now) {
+  p.born ??= now;
+  p.life = (now - p.born) / 1000;
   if (p.life >= p.ttl) return false;
   if (p.vx !== undefined) {
     if (p.drag) {
@@ -187,8 +191,11 @@ export function draw(g, p, t) {
   const k = p.life / p.ttl;
   const fade = 1 - k;
   g.save();
-  DRAWERS[p.kind](g, p, k, fade, t);
-  g.restore();
+  try {
+    DRAWERS[p.kind](g, p, k, fade, t);
+  } finally {
+    g.restore();
+  }
 }
 
 /**
