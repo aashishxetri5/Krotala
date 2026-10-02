@@ -35,7 +35,7 @@ The builds are not code-signed yet:
 
 ## Privacy
 
-Keyboard Sounds needs to see key presses to play sounds. It stores only how many times each key was pressed, for the Stats page. It never stores what you type or the order of keys, and it sends nothing anywhere except the update check to GitHub. Everything stays in your user data folder (`%APPDATA%\Keyboard Sounds` on Windows).
+Keyboard Sounds needs to see key presses to play sounds. It stores only how many times each key was pressed, for the Stats page. It never stores what you type or the order of keys, and it sends nothing anywhere except the update check to GitHub. Everything stays in your user data folder (`%APPDATA%\Keyboard Sounds` on Windows), and **Settings → Privacy → Reset stats** clears it.
 
 Windows does not let apps hear keys typed into programs running as Administrator unless they also run as Administrator.
 

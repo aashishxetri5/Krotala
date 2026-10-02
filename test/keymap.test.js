@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { BUILT_IN_SOUNDS } from '../src/shared/catalog.js';
-import { CHAOS_SOUND_ID, MUTE, PACK_DEFAULT, PitchMode } from '../src/shared/constants.js';
+import {
+  CHAOS_SOUND_ID, ChokeGroup, MUTE, PACK_DEFAULT, PitchMode,
+} from '../src/shared/constants.js';
 import { SONGS } from '../src/shared/songs.js';
 import { KeyMapper } from '../src/main/core/keymap.js';
 import { isPrintable, keyGroup, keyPan, melodySemitones } from '../src/main/core/keyboard-layout.js';
@@ -88,6 +90,16 @@ test('Song mode plays the notes in order and in tune, skipping modifiers', () =>
   assert.equal(m.songProgress(s).index, 4);
   m.restartSong();
   assert.equal(m.songProgress(s).index, 0);
+});
+
+test('Song notes are centred and cut each other off, so fast typing keeps the tune clear', () => {
+  const m = mapper();
+  const song = m.resolve({ ...BASE, soundId: 'piano', pitchMode: PitchMode.SONG, stereo: true }, 'Q');
+  assert.equal(song.choke, ChokeGroup.SONG);
+  assert.equal(song.pan, 0);
+  const normal = m.resolve({ ...BASE, soundId: 'piano', stereo: true }, 'Q');
+  assert.equal(normal.choke, undefined, 'other modes let notes ring together');
+  assert.ok(normal.pan < 0);
 });
 
 test('Song mode transposes for the pack base note', () => {
