@@ -4,11 +4,11 @@
  */
 
 import {
-  AUDIO_EXTENSIONS, CUSTOM_PACK_ICONS, DEFAULT_CUSTOM_ICON, Limits, PACK_SPECIAL_KEYS,
+  APP_NAME, AUDIO_EXTENSIONS, CUSTOM_PACK_ICONS, DEFAULT_CUSTOM_ICON, Limits, PACK_SPECIAL_KEYS,
 } from '../../shared/constants.js';
 import { formatMegabytes } from '../../shared/names.js';
 
-export const PACK_FORMAT = 'keyboard-sounds-pack';
+export const PACK_FORMAT = 'krotala-pack';
 const PACK_VERSION = 1;
 
 const FILE_NAME = /^[\w-]{1,48}\.([a-z0-9]{2,5})$/;
@@ -108,10 +108,10 @@ export function decodePack(buffer) {
   try {
     pack = JSON.parse(buffer.toString('utf8'));
   } catch {
-    throw new PackError('This file is not a Keyboard Sounds pack.');
+    throw new PackError(`This file is not a ${APP_NAME} pack.`);
   }
-  if (!pack || pack.format !== PACK_FORMAT) throw new PackError('This file is not a Keyboard Sounds pack.');
-  if (pack.version > PACK_VERSION) throw new PackError('This pack needs a newer version of Keyboard Sounds.');
+  if (!pack || pack.format !== PACK_FORMAT) throw new PackError(`This file is not a ${APP_NAME} pack.`);
+  if (pack.version > PACK_VERSION) throw new PackError(`This pack needs a newer version of ${APP_NAME}.`);
 
   const entries = Object.entries(pack.files || {});
   if (!entries.length || entries.length > Limits.MAX_PACK_FILES) throw new PackError('The pack has no sounds, or too many.');

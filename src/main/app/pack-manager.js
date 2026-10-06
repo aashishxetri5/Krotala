@@ -7,7 +7,7 @@ import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import { app, dialog } from 'electron';
 import {
-  AUDIO_EXTENSIONS, CUSTOM_PACK_ICONS, DEFAULT_RECORDING_NAME, Limits, PACK_EXTENSION,
+  APP_NAME, AUDIO_EXTENSIONS, CUSTOM_PACK_ICONS, DEFAULT_RECORDING_NAME, Limits, PACK_EXTENSION,
 } from '../../shared/constants.js';
 import { DEFAULT_SETTINGS } from '../settings/schema.js';
 import { cleanText } from '../core/pack-codec.js';
@@ -78,7 +78,7 @@ export class PackManager extends EventEmitter {
       properties: ['openFile', 'multiSelections'],
       filters: [
         { name: 'Sounds and sound packs', extensions: [...AUDIO_EXTENSIONS, PACK_EXTENSION] },
-        { name: 'Keyboard Sounds pack', extensions: [PACK_EXTENSION] },
+        { name: `${APP_NAME} pack`, extensions: [PACK_EXTENSION] },
       ],
     });
     if (result.canceled || !result.filePaths.length) return null;
@@ -193,7 +193,7 @@ export class PackManager extends EventEmitter {
     const result = await dialog.showSaveDialog(this.getParentWindow(), {
       title: 'Share sound pack',
       defaultPath: path.join(app.getPath('documents'), `${safeName}.${PACK_EXTENSION}`),
-      filters: [{ name: 'Keyboard Sounds pack', extensions: [PACK_EXTENSION] }],
+      filters: [{ name: `${APP_NAME} pack`, extensions: [PACK_EXTENSION] }],
     });
     if (result.canceled || !result.filePath) return null;
     await this.library.exportPack(pack, result.filePath);

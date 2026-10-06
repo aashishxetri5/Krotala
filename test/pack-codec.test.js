@@ -37,7 +37,7 @@ test('the sustain choice travels with a shared pack', async () => {
 
 test('files that are not packs are rejected', () => {
   assert.throws(() => decodePack(Buffer.from('not json')), PackError);
-  assert.throws(() => decodePack(bytes({ ...validPack(), format: 'other' })), /not a Keyboard Sounds pack/);
+  assert.throws(() => decodePack(bytes({ ...validPack(), format: 'other' })), /not a Krotala pack/);
   assert.throws(() => decodePack(bytes({ ...validPack(), version: 99 })), /newer version/);
 });
 

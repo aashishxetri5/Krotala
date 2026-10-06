@@ -1,10 +1,14 @@
 {
-  "name": "keyboard-sounds",
-  "productName": "Keyboard Sounds",
+  "name": "krotala",
+  "productName": "Krotala",
   "version": "1.0.0",
   "description": "Play a sound on every keystroke, system-wide. Sound packs, song mode, on-screen effects, per-app profiles and typing stats.",
   "author": "Aashish Katwal",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aashishxetri5/krotala.git"
+  },
   "type": "module",
   "main": "src/main/index.js",
   "engines": {
@@ -20,6 +24,7 @@
     "test": "node --test \"test/**/*.test.js\"",
     "predist": "npm run assets && npm run check",
     "dist": "electron-builder --publish never",
+    "dist:store": "npm run assets && npm run check && electron-builder --win appx --publish never",
     "release": "npm run assets && npm run check && electron-builder --publish always"
   },
   "dependencies": {
@@ -36,8 +41,8 @@
     "lucide": "^1.49.0"
   },
   "build": {
-    "appId": "com.keyboardsounds.app",
-    "productName": "Keyboard Sounds",
+    "appId": "io.github.aashishxetri5.krotala",
+    "productName": "Krotala",
     "copyright": "Copyright © 2026 Aashish Katwal",
     "directories": {
       "output": "dist",
@@ -53,11 +58,14 @@
       "node_modules/koffi/**"
     ],
     "npmRebuild": false,
+    "toolsets": {
+      "winCodeSign": "1.1.0"
+    },
     "fileAssociations": [
       {
         "ext": "kbpack",
-        "name": "Keyboard Sounds Pack",
-        "description": "Keyboard Sounds sound pack",
+        "name": "Krotala Sound Pack",
+        "description": "Krotala sound pack",
         "role": "Viewer"
       }
     ],
@@ -76,7 +84,21 @@
       "perMachine": false,
       "runAfterFinish": true,
       "createDesktopShortcut": true,
-      "artifactName": "Keyboard-Sounds-Setup-${version}.${ext}"
+      "artifactName": "Krotala-Setup-${version}.${ext}"
+    },
+    "appx": {
+      "applicationId": "Krotala",
+      "backgroundColor": "transparent",
+      "capabilities": [
+        "microphone"
+      ],
+      "customExtensionsPath": "build/appx-startup-task.xml",
+      "languages": [
+        "en-US"
+      ],
+      "minVersion": "10.0.19041.0",
+      "maxVersionTested": "10.0.26100.0",
+      "artifactName": "Krotala-${version}.${ext}"
     },
     "mac": {
       "target": [
@@ -96,9 +118,9 @@
         }
       ],
       "category": "public.app-category.entertainment",
-      "artifactName": "Keyboard-Sounds-${version}-${arch}.${ext}",
+      "artifactName": "Krotala-${version}-${arch}.${ext}",
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "Keyboard Sounds uses the microphone only when you record your own sound.",
+        "NSMicrophoneUsageDescription": "Krotala uses the microphone only when you record your own sound.",
         "LSUIElement": true
       }
     },
@@ -107,7 +129,7 @@
         "AppImage"
       ],
       "category": "Audio",
-      "artifactName": "Keyboard-Sounds-${version}.${ext}"
+      "artifactName": "Krotala-${version}.${ext}"
     },
     "publish": [
       {

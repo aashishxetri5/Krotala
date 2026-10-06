@@ -3,7 +3,7 @@
  * be unavailable, so every access is guarded and failures are ignored.
  */
 
-const PREFIX = 'keyboard-sounds:';
+const PREFIX = 'krotala:';
 
 /**
  * @param {string} key - Preference name.

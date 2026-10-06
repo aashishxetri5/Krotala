@@ -1,6 +1,8 @@
-# Keyboard Sounds
+# Krotala
 
 A desktop app that plays a sound on every key press, in every app. Choose from phone dial tones, mechanical switches, a typewriter, piano, drums, laser blasts, a shotgun and more, or record your own. It runs quietly in the system tray.
+
+The name comes from the *krotala*, the wooden clappers that dancers in ancient Greece clicked in their hands to keep the beat.
 
 ## Features
 
@@ -19,23 +21,19 @@ A desktop app that plays a sound on every key press, in every app. Choose from p
 
 ## Download
 
-Get the latest installer from the [Releases](../../releases) page.
-
-| Platform | File |
+| Platform | Get it |
 | --- | --- |
-| Windows 10/11 | `Keyboard-Sounds-Setup-<version>.exe` |
-| macOS (Apple silicon / Intel) | `Keyboard-Sounds-<version>-arm64.dmg` / `-x64.dmg` |
-| Linux | `Keyboard-Sounds-<version>.AppImage` |
+| Windows 10 (version 2004 or later) and 11 | Microsoft Store (recommended), or `Krotala-Setup-<version>.exe` from [Releases](../../releases) |
+| Linux (X11) | `Krotala-<version>.AppImage` from [Releases](../../releases) |
 
-The builds are not code-signed yet:
-
-- **Windows** may show “Windows protected your PC”. Choose **More info → Run anyway**.
-- **macOS** may say the app is damaged. Move it to Applications and run `xattr -cr "/Applications/Keyboard Sounds.app"`. Then allow it under **System Settings → Privacy & Security → Accessibility** so it can hear the keyboard.
-- **Linux** needs an X11 session; Wayland does not allow global key hooks.
+- **Microsoft Store:** installs without warnings, updates through the Store, and starts with Windows. You can turn that off in Settings → Apps → Startup.
+- **Installer from Releases:** not code-signed yet, so Windows may show “Windows protected your PC”. Choose **More info → Run anyway**. It updates itself from GitHub.
+- **Linux:** needs an X11 session; Wayland does not allow apps to hear keys pressed in other apps.
+- **macOS:** no release yet.
 
 ## Privacy
 
-Keyboard Sounds needs to see key presses to play sounds. It stores only how many times each key was pressed, for the Stats page. It never stores what you type or the order of keys, and it sends nothing anywhere except the update check to GitHub. Everything stays in your user data folder (`%APPDATA%\Keyboard Sounds` on Windows), and **Settings → Privacy → Reset stats** clears it.
+Krotala needs to see key presses to play sounds. It stores only counts for the Stats page, such as how many times each key was pressed. It never stores what you type or the order of keys. The only thing it sends anywhere is the update check to GitHub, and the Microsoft Store version doesn't send even that. Everything stays on your computer, and **Settings → Privacy → Reset stats** clears your stats. Details are in the [privacy policy](PRIVACY.md).
 
 Windows does not let apps hear keys typed into programs running as Administrator unless they also run as Administrator.
 
@@ -86,10 +84,7 @@ The main process installs a system-wide keyboard hook ([uiohook-napi](https://gi
 
 ### Releasing
 
-1. Set `"repository"` in `package.json` to your GitHub repository.
-2. Update the version in `package.json` and add an entry to `CHANGELOG.md`.
-3. Commit, then push a tag: `git tag v1.0.0 && git push --tags`.
-4. The Release workflow builds Windows, macOS and Linux installers and attaches them to a draft release. Publish the draft; installed copies pick up the update automatically.
+See [RELEASING.md](RELEASING.md) for GitHub releases, the Microsoft Store package (`npm run dist:store`) and code signing.
 
 ## License
 

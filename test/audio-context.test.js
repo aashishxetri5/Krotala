@@ -44,7 +44,7 @@ test('microphone users are read from the registry dump, minus ignored apps', () 
     '    LastUsedTimeStart    REG_QWORD    0x1dca4785d8ee1e0',
     '    LastUsedTimeStop    REG_QWORD    0x0',
     '',
-    'HKEY_CURRENT_USER\\...\\microphone\\NonPackaged\\C:#apps#keyboard sounds.exe',
+    'HKEY_CURRENT_USER\\...\\microphone\\NonPackaged\\C:#apps#krotala.exe',
     '    LastUsedTimeStart    REG_QWORD    0x1dca4785d8ee1e0',
     '    LastUsedTimeStop    REG_QWORD    0x0',
     '',
@@ -52,6 +52,6 @@ test('microphone users are read from the registry dump, minus ignored apps', () 
     '    LastUsedTimeStart    REG_QWORD    0x1d9ac2c1ed0f5a0',
     '    LastUsedTimeStop    REG_QWORD    0x1d9ac2c26915cee',
   ].join('\r\n');
-  assert.deepEqual(parseActiveMicUsers(out, ['C:#apps#Keyboard Sounds.exe']), ['HKEY_CURRENT_USER\\...\\microphone\\Zoom']);
+  assert.deepEqual(parseActiveMicUsers(out, ['C:#apps#Krotala.exe']), ['HKEY_CURRENT_USER\\...\\microphone\\Zoom']);
   assert.equal(parseActiveMicUsers(out).length, 2);
 });

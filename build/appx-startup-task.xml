@@ -1,0 +1,8 @@
+        <!-- Starts the Store version at sign-in, straight into the tray (the hidden flag
+             in src/main/services/system-integration.js). Users turn it on or off in
+             Windows Settings > Apps > Startup. Executable and DisplayName must match
+             productName in package.json. -->
+        <desktop:Extension Category="windows.startupTask" Executable="app\Krotala.exe" EntryPoint="Windows.FullTrustApplication"
+          xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10" uap10:Parameters="--hidden">
+          <desktop:StartupTask TaskId="StartAtSignIn" Enabled="true" DisplayName="Krotala" />
+        </desktop:Extension>

@@ -3,8 +3,8 @@
  * Anything that more than one process needs to agree on lives here.
  */
 
-export const APP_NAME = 'Keyboard Sounds';
-export const APP_ID = 'com.keyboardsounds.app';
+export const APP_NAME = 'Krotala';
+export const APP_ID = 'io.github.aashishxetri5.krotala';
 
 /** Sound id meaning "a random built-in pack on every key". */
 export const CHAOS_SOUND_ID = '__chaos';

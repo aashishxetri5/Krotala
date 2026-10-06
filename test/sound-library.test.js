@@ -10,7 +10,7 @@ import { SoundLibrary } from '../src/main/services/sound-library.js';
  * @returns {Promise<{ library: SoundLibrary, dir: string, customDir: string }>} A library in a temp folder.
  */
 async function tempLibrary() {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'keyboard-sounds-test-'));
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'krotala-test-'));
   const customDir = path.join(dir, 'custom');
   return { library: new SoundLibrary({ builtInDir: dir, customDir }), dir, customDir };
 }

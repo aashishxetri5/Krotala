@@ -3,7 +3,7 @@
  */
 
 import {
-  CUSTOM_PACK_ICONS, Invoke, Limits, Send, ToastKind,
+  APP_NAME, CUSTOM_PACK_ICONS, Invoke, Limits, Send, ToastKind,
 } from '../../../shared/constants.js';
 import { api } from '../../shared/bridge.js';
 import { $, h } from '../../shared/dom.js';
@@ -149,7 +149,7 @@ export class PackEditor {
         showToast({
           kind: ToastKind.SUCCESS,
           title: 'Pack saved',
-          message: `Send ${file.split(/[\\/]/).pop()} to a friend. Opening it installs the pack in Keyboard Sounds.`,
+          message: `Send ${file.split(/[\\/]/).pop()} to a friend. Opening it installs the pack in ${APP_NAME}.`,
         });
       }
     } catch (err) {

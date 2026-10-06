@@ -6,7 +6,7 @@ import test from 'node:test';
 import { StatsService } from '../src/main/app/stats-service.js';
 
 test('resetting stats clears counts and achievements, in memory and on disk', async () => {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'keyboard-sounds-stats-'));
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'krotala-stats-'));
   const file = path.join(dir, 'stats.json');
   const stats = new StatsService(file, null);
   for (let i = 0; i < 120; i++) stats.update((t) => t.record('A', { printable: true }));
