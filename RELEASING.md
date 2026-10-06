@@ -15,6 +15,13 @@ Windows ships two ways: through the **Microsoft Store**, which signs the app so 
 
 The Release workflow builds the Windows installer and the Linux AppImage and attaches them to a **draft** release. Drafts are visible only to people with write access to the repository, so nothing is public yet.
 
+Don't create the release on GitHub yourself: the workflow can't attach files to a release that is already published. If a build fails, re-run it from the Actions tab. If you changed the workflow itself, move the tag to the new commit, because a re-run uses the workflow from the tagged commit:
+
+```bash
+git tag -d v1.0.0 && git push origin :refs/tags/v1.0.0
+git tag v1.0.0 && git push origin v1.0.0
+```
+
 ## 2. Check the draft before publishing
 
 Open the draft under **Releases** on GitHub and download the `.exe`.

@@ -1,6 +1,7 @@
 {
   "name": "krotala",
   "productName": "Krotala",
+  "desktopName": "krotala.desktop",
   "version": "1.0.0",
   "description": "Play a sound on every keystroke, system-wide. Sound packs, song mode, on-screen effects, per-app profiles and typing stats.",
   "author": "Aashish Katwal",
@@ -132,7 +133,8 @@
         "AppImage"
       ],
       "category": "Audio",
-      "artifactName": "Krotala-${version}.${ext}"
+      "artifactName": "Krotala-${version}.${ext}",
+      "syncDesktopName": true
     },
     "publish": [
       {

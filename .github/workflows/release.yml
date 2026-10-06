@@ -3,6 +3,9 @@ name: Release
 # Push a tag like v1.2.0 to build the Windows and Linux installers and attach them to a
 # draft GitHub Release. Review the draft, then publish it; installed apps update from
 # published releases automatically.
+#
+# Don't create the release on GitHub by hand. The draft job creates it once, before the
+# builds start, so they never race to create it. Both builds then upload to that draft.
 on:
   push:
     tags: ['v*']
@@ -11,7 +14,27 @@ permissions:
   contents: write
 
 jobs:
+  draft:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - name: Create the draft release
+        run: |
+          if is_draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null); then
+            if [ "$is_draft" != "true" ]; then
+              echo "::error::Release $TAG is already published, so the installers can't be attached to it. Delete the release on GitHub (keep the tag), then re-run this workflow."
+              exit 1
+            fi
+            echo "Using the existing draft for $TAG."
+          else
+            gh release create "$TAG" --draft --verify-tag --title "Krotala ${TAG#v}" --generate-notes
+          fi
+
   build:
+    needs: draft
     strategy:
       fail-fast: false
       matrix:
@@ -22,8 +45,8 @@ jobs:
             target: --linux
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
