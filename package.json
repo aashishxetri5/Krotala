@@ -87,6 +87,9 @@
       "artifactName": "Krotala-Setup-${version}.${ext}"
     },
     "appx": {
+      "identityName": "AashishKatwal.Krotala",
+      "publisher": "CN=C8496BEF-14A8-45B4-A229-D9FB3A6D7B16",
+      "publisherDisplayName": "Aashish Katwal",
       "applicationId": "Krotala",
       "backgroundColor": "transparent",
       "capabilities": [
