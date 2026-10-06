@@ -80,7 +80,7 @@ export function mountAppsPage(store) {
         return h('div', { className: 'profile-row' }, [
           h('span', { className: 'profile-name', attrs: { title: profile.app } }, [
             appLabel(profile.app),
-            isActive ? h('span', { className: 'profile-active', text: 'Active' }) : null,
+            isActive ? h('span', { className: 'profile-badge', text: 'Active' }) : null,
           ]),
           select,
           h('button', {
