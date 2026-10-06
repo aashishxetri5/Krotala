@@ -57,3 +57,24 @@ jobs:
         run: npx electron-builder ${{ matrix.target }} --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # electron-builder skips the upload, without failing, when the release was published
+  # in the meantime. This makes sure the draft really has every file before you publish it.
+  verify:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+    steps:
+      - name: Check the draft has the installers and update files
+        run: |
+          files=$(gh release view "$TAG" --json isDraft,assets --jq 'select(.isDraft) | .assets[].name')
+          for pattern in '\.exe$' '\.AppImage$' '^latest\.yml$' '^latest-linux\.yml$'; do
+            if ! grep -qE "$pattern" <<< "$files"; then
+              echo "::error::The draft release for $TAG has no file matching $pattern. If the release was published before the builds finished, delete it on GitHub (keep the tag) and re-run this workflow."
+              exit 1
+            fi
+          done
+          echo "The draft for $TAG has every file. Review it on GitHub, then publish it."
