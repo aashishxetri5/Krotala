@@ -86,6 +86,7 @@ export function describeUpdate(u) {
   switch (u.status) {
     case UpdateStatus.DEV: return 'Updates are delivered to installed copies of the app.';
     case UpdateStatus.UNAVAILABLE: return "This build doesn't receive updates. Install a release from GitHub to get them.";
+    case UpdateStatus.STORE: return 'The Microsoft Store keeps this app up to date.';
     case UpdateStatus.IDLE: return 'Not checked yet.';
     case UpdateStatus.CHECKING: return 'Checking for updates…';
     case UpdateStatus.LATEST: return "You're on the latest version.";

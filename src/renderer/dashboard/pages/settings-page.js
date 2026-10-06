@@ -46,6 +46,15 @@ export function mountSettingsPage(store) {
     }
   });
 
+  const startupButton = /** @type {HTMLButtonElement} */ ($('#startup-settings'));
+  startupButton.addEventListener('click', async () => {
+    try {
+      await withBusy(startupButton, () => api.invoke(Invoke.STARTUP_SETTINGS_OPEN));
+    } catch (err) {
+      showError("Couldn't open Windows startup settings", err);
+    }
+  });
+
   installButton.addEventListener('click', async () => {
     try {
       await withBusy(installButton, () => api.invoke(Invoke.UPDATES_INSTALL));
@@ -59,11 +68,18 @@ export function mountSettingsPage(store) {
     $('#hotkey').textContent = info.hotkey;
     if (!info.hotkeyRegistered) $('#hotkey-note').textContent = 'Unavailable: another app is using this shortcut.';
     $('#about').textContent = `${APP_NAME} ${info.version}`;
+    // Store installs start through a Windows startup task, which only Windows Settings can change.
+    $('#login-item-row').hidden = info.storeBuild;
+    $('#startup-task-row').hidden = !info.storeBuild;
   });
 
   store.subscribe(['updates'], ({ updates }) => {
     if (!updates) return;
     $('#update-status').textContent = describeUpdate(updates);
+    // The Store updates the app itself, so there is nothing to switch or check here.
+    const storeManaged = updates.status === UpdateStatus.STORE;
+    $('#auto-update-row').hidden = storeManaged;
+    checkButton.hidden = storeManaged;
     checkButton.disabled = CHECK_DISABLED.includes(updates.status);
     installButton.hidden = updates.status !== UpdateStatus.READY;
     progress.hidden = updates.status !== UpdateStatus.DOWNLOADING;

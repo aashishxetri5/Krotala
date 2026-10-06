@@ -4,8 +4,8 @@
 
 import { app, globalShortcut, ipcMain } from 'electron';
 import { Invoke, Send } from '../../shared/constants.js';
-import { Hotkey } from '../constants.js';
-import { requestMicrophoneAccess } from '../services/system-integration.js';
+import { Hotkey, IS_STORE_BUILD } from '../constants.js';
+import { openStartupSettings, requestMicrophoneAccess } from '../services/system-integration.js';
 import { appIcon } from '../windows/app-icons.js';
 
 /**
@@ -77,6 +77,7 @@ export function registerIpc({ settings, packs, stats, context, mapper, playback,
     platform: process.platform,
     hotkey: Hotkey.TOGGLE_MUTE_LABEL,
     hotkeyRegistered: globalShortcut.isRegistered(Hotkey.TOGGLE_MUTE),
+    storeBuild: IS_STORE_BUILD,
     icon: appIcon().toDataURL(),
   }));
   handle(Invoke.SONG_PROGRESS, () => mapper.songProgress(settings.get()));
@@ -85,6 +86,7 @@ export function registerIpc({ settings, packs, stats, context, mapper, playback,
   handle(Invoke.UPDATES_CHECK, () => updater.check({ manual: true }));
   handle(Invoke.UPDATES_INSTALL, () => updater.install());
   handle(Invoke.MIC_REQUEST, () => requestMicrophoneAccess());
+  handle(Invoke.STARTUP_SETTINGS_OPEN, () => openStartupSettings());
 
   handle(Invoke.PACKS_IMPORT, () => packs.importFromDialog());
   handle(Invoke.PACKS_ADD_FILES, (id) => packs.addFilesFromDialog(id));

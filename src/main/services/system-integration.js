@@ -2,22 +2,37 @@
  * @file Operating-system integration: start at login, permissions and macOS Accessibility.
  */
 
-import { app, dialog, session, systemPreferences } from 'electron';
+import { app, dialog, session, shell, systemPreferences } from 'electron';
 import { APP_NAME } from '../../shared/constants.js';
-import { IS_MAC } from '../constants.js';
-
-/** Command-line flag that starts the app straight into the tray. */
-const HIDDEN_FLAG = '--hidden';
+import { IS_MAC, IS_STORE_BUILD } from '../constants.js';
 
 /**
- * Registers or removes the app as a login item.
+ * Command-line flag that starts the app straight into the tray. The Store package's
+ * startup task passes it too (see build/appx-startup-task.xml).
+ */
+const HIDDEN_FLAG = '--hidden';
+/** Windows Settings page listing the apps that start at sign-in. */
+const STARTUP_SETTINGS_URI = 'ms-settings:startupapps';
+
+/**
+ * Registers or removes the app as a login item. Store installs start through the
+ * package's startup task instead, which the user controls in Windows Settings.
  * @param {boolean} enabled - Whether to start with the OS.
  * @returns {void}
  */
 export function applyLoginItem(enabled) {
+  if (IS_STORE_BUILD) return;
   // In development Electron needs the app folder as its first argument.
   const args = app.isPackaged ? [HIDDEN_FLAG] : [app.getAppPath(), HIDDEN_FLAG];
   app.setLoginItemSettings({ openAtLogin: enabled, openAsHidden: true, path: process.execPath, args });
+}
+
+/**
+ * Opens the Windows Settings page where Store installs are turned on or off at sign-in.
+ * @returns {Promise<void>}
+ */
+export function openStartupSettings() {
+  return shell.openExternal(STARTUP_SETTINGS_URI);
 }
 
 /** @returns {boolean} True when the app was launched to run in the background. */

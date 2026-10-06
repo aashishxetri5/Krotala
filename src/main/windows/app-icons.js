@@ -20,7 +20,7 @@ export function trayIcon(muted = false) {
   const key = `tray:${muted}`;
   if (!cache.has(key)) {
     const image = nativeImage.createEmpty();
-    for (const [scaleFactor, px] of TRAY_SCALES) image.addRepresentation({ scaleFactor, buffer: drawIcon(px, muted) });
+    for (const [scaleFactor, px] of TRAY_SCALES) image.addRepresentation({ scaleFactor, buffer: drawIcon(px, { muted }) });
     cache.set(key, image);
   }
   return cache.get(key);

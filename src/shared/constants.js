@@ -117,6 +117,8 @@ export const StatsRules = Object.freeze({
 export const UpdateStatus = Object.freeze({
   DEV: 'dev',
   UNAVAILABLE: 'unavailable',
+  /** Installed from the Microsoft Store, which delivers updates itself. */
+  STORE: 'store',
   IDLE: 'idle',
   CHECKING: 'checking',
   LATEST: 'latest',
@@ -155,6 +157,7 @@ export const Invoke = Object.freeze({
   UPDATES_CHECK: 'updates:check',
   UPDATES_INSTALL: 'updates:install',
   MIC_REQUEST: 'mic:request',
+  STARTUP_SETTINGS_OPEN: 'system:startup-settings',
   PACKS_IMPORT: 'packs:import',
   PACKS_ADD_FILES: 'packs:add-files',
   PACKS_UPDATE: 'packs:update',

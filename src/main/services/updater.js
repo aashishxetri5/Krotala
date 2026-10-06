@@ -7,17 +7,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { app } from 'electron';
 import { UpdateStatus } from '../../shared/constants.js';
-import { Timing } from '../constants.js';
+import { IS_STORE_BUILD, Timing } from '../constants.js';
 
 /** Written by electron-builder when the build is published to a release feed. */
 const UPDATE_FEED_FILE = 'app-update.yml';
 
+/** Statuses of builds that never check for updates themselves. */
+const SELF_UPDATE_OFF = [UpdateStatus.DEV, UpdateStatus.UNAVAILABLE, UpdateStatus.STORE];
+
 /**
- * @returns {string} Initial status: development builds and builds made without a
- *   release feed (for example `npm run dist`) cannot update themselves.
+ * @returns {string} Initial status: development builds, Store installs and builds made
+ *   without a release feed (for example `npm run dist`) do not update themselves.
  */
 function initialStatus() {
   if (!app.isPackaged) return UpdateStatus.DEV;
+  if (IS_STORE_BUILD) return UpdateStatus.STORE;
   return fs.existsSync(path.join(process.resourcesPath, UPDATE_FEED_FILE)) ? UpdateStatus.IDLE : UpdateStatus.UNAVAILABLE;
 }
 
@@ -74,9 +78,9 @@ export class Updater {
     return this.state;
   }
 
-  /** @returns {boolean} True when this build has an update feed. */
+  /** @returns {boolean} True when this build updates itself. */
   canUpdate() {
-    return this.state.status !== UpdateStatus.DEV && this.state.status !== UpdateStatus.UNAVAILABLE;
+    return !SELF_UPDATE_OFF.includes(this.state.status);
   }
 
   /**

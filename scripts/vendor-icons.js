@@ -19,7 +19,7 @@ const ICON_NAMES = [
   'audio-lines', 'keyboard', 'wand-sparkles', 'app-window', 'chart-column', 'settings',
   'play', 'square-pen', 'trash', 'plus', 'x', 'check', 'rotate-ccw', 'upload', 'share-2', 'mic',
   'info', 'circle-check', 'circle-alert', 'triangle-alert', 'loader-circle',
-  'volume-2', 'refresh-cw', 'lock', 'trophy',
+  'volume-2', 'refresh-cw', 'lock', 'trophy', 'external-link',
   // Sound packs
   'phone', 'type', 'piano', 'keyboard-music', 'music-4', 'drum', 'zap', 'crosshair', 'swords',
   'coins', 'gamepad-2', 'droplets', 'activity', 'bird', 'hammer', 'dices', 'music', 'music-2',

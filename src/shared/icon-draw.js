@@ -83,18 +83,19 @@ function chunk(type, data) {
 }
 
 /**
- * Encodes square RGBA pixels as a PNG file.
- * @param {number} size - Width and height in pixels.
+ * Encodes RGBA pixels as a PNG file.
+ * @param {number} width - Width in pixels.
+ * @param {number} height - Height in pixels.
  * @param {Buffer} rgba - Non-premultiplied RGBA pixels, row by row.
  * @returns {Buffer} PNG file contents.
  */
-function encodePng(size, rgba) {
-  const stride = size * 4 + 1;
-  const raw = Buffer.alloc(stride * size);
-  for (let y = 0; y < size; y++) rgba.copy(raw, y * stride + 1, y * size * 4, (y + 1) * size * 4);
+function encodePng(width, height, rgba) {
+  const stride = width * 4 + 1;
+  const raw = Buffer.alloc(stride * height);
+  for (let y = 0; y < height; y++) rgba.copy(raw, y * stride + 1, y * width * 4, (y + 1) * width * 4);
   const header = Buffer.alloc(13);
-  header.writeUInt32BE(size, 0);
-  header.writeUInt32BE(size, 4);
+  header.writeUInt32BE(width, 0);
+  header.writeUInt32BE(height, 4);
   header[8] = 8; // bit depth
   header[9] = 6; // RGBA
   return Buffer.concat([PNG_SIGNATURE, chunk('IHDR', header), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
@@ -219,27 +220,30 @@ function layersAt(u, v, coverage, colors, muted) {
 
 /**
  * Draws the app icon.
- * @param {number} size - Edge length in pixels.
- * @param {boolean} [muted=false] - Grey variant without waves, shown while sounds are muted.
+ * @param {number} size - Edge length of the icon in pixels.
+ * @param {object} [options]
+ * @param {boolean} [options.muted=false] - Grey variant without waves, shown while sounds are muted.
+ * @param {number} [options.width=size] - Image width; a wider image centres the icon on a transparent background.
  * @returns {Buffer} PNG file contents.
  */
-export function drawIcon(size, muted = false) {
+export function drawIcon(size, { muted = false, width = size } = {}) {
   const colors = muted ? PALETTE.muted : PALETTE.normal;
   // Small icons are supersampled so thin strokes keep their shape.
   const samples = size <= 64 ? 4 : size <= 256 ? 2 : 1;
   const aa = 1.2 / (size * samples);
   const coverage = (d) => Math.min(1, Math.max(0, 0.5 - d / aa));
-  const rgba = Buffer.alloc(size * size * 4);
+  const offset = (width - size) / 2;
+  const rgba = Buffer.alloc(width * size * 4);
 
   for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
+    for (let x = 0; x < width; x++) {
       let r = 0;
       let g = 0;
       let b = 0;
       let a = 0;
       for (let sy = 0; sy < samples; sy++) {
         for (let sx = 0; sx < samples; sx++) {
-          const u = (x + (sx + 0.5) / samples) / size;
+          const u = (x - offset + (sx + 0.5) / samples) / size;
           const v = (y + (sy + 0.5) / samples) / size;
           // Composite with "over" in premultiplied space.
           let pr = 0;
@@ -258,7 +262,7 @@ export function drawIcon(size, muted = false) {
           a += pa;
         }
       }
-      const i = (y * size + x) * 4;
+      const i = (y * width + x) * 4;
       const n = samples * samples;
       // Convert the averaged premultiplied colour back to straight alpha.
       rgba[i] = a > 0 ? Math.round(r / a) : 0;
@@ -267,5 +271,5 @@ export function drawIcon(size, muted = false) {
       rgba[i + 3] = Math.round((a / n) * 255);
     }
   }
-  return encodePng(size, rgba);
+  return encodePng(width, size, rgba);
 }

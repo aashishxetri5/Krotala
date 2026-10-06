@@ -247,10 +247,14 @@
         <div class="columns">
           <div class="panel">
             <h3>General</h3>
-            <label class="row">
+            <label class="row" id="login-item-row">
               <span class="row-text">Start with your computer<small>Opens quietly in the system tray.</small></span>
               <input type="checkbox" class="switch" data-setting="launchAtLogin">
             </label>
+            <div class="row static" id="startup-task-row" hidden>
+              <span class="row-text">Start with Windows<small>Opens quietly in the system tray. Turn it on or off in Windows startup settings.</small></span>
+              <button class="btn" id="startup-settings" type="button"><span data-icon="external-link" data-icon-size="16"></span>Open</button>
+            </div>
             <div class="row static">
               <span class="row-text">Mute or unmute from anywhere<small id="hotkey-note">Keyboard shortcut</small></span>
               <kbd id="hotkey"></kbd>
@@ -259,7 +263,7 @@
           </div>
           <div class="panel">
             <h3>Updates</h3>
-            <label class="row">
+            <label class="row" id="auto-update-row">
               <span class="row-text">Update automatically<small>Downloads in the background and installs when you quit.</small></span>
               <input type="checkbox" class="switch" data-setting="autoUpdate">
             </label>

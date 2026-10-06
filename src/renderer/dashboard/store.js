@@ -14,7 +14,7 @@ import { showError } from './ui/toast.js';
  * @property {import('../../shared/types.js').RuntimeState | null} runtime
  * @property {object | null} stats
  * @property {object | null} updates
- * @property {{ version: string, platform: string, hotkey: string, hotkeyRegistered: boolean, icon: string } | null} info
+ * @property {{ version: string, platform: string, hotkey: string, hotkeyRegistered: boolean, storeBuild: boolean, icon: string } | null} info
  */
 
 /** @typedef {keyof DashboardState} StateKey */

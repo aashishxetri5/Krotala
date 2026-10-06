@@ -12,7 +12,7 @@ import { Notifier } from './app/notifier.js';
 import { isPackFile, PackManager } from './app/pack-manager.js';
 import { PlaybackController } from './app/playback-controller.js';
 import { StatsService } from './app/stats-service.js';
-import { Hotkey, IS_WINDOWS, Paths, Timing } from './constants.js';
+import { Hotkey, IS_STORE_BUILD, IS_WINDOWS, Paths, Timing } from './constants.js';
 import { KeyMapper } from './core/keymap.js';
 import { DEFAULT_SETTINGS } from './settings/schema.js';
 import { SettingsService } from './settings/settings-service.js';
@@ -46,7 +46,9 @@ const findPackArgument = (argv) => argv.slice(1).find(isPackFile);
  *   Handles used by the lifecycle events.
  */
 async function startApp() {
-  app.setAppUserModelId(APP_ID);
+  // Store packages already have an identity from their manifest; replacing it would
+  // detach notifications from the installed app.
+  if (!IS_STORE_BUILD) app.setAppUserModelId(APP_ID);
   await initForeground();
   const userData = app.getPath('userData');
 
